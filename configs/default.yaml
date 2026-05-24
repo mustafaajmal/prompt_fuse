@@ -1,0 +1,32 @@
+# PromptFuse default configuration
+
+compressor:
+  proxy_model: "meta-llama/Llama-3.2-1B"
+  compression_ratio: 0.40  # target token reduction (0.25, 0.40, 0.55)
+  device: "auto"
+  max_length: 4096
+
+unifier:
+  encoder_model: "sentence-transformers/all-MiniLM-L6-v2"
+  fine_tuned_encoder: null  # path to fine-tuned checkpoint, if available
+  similarity_threshold: 0.85  # cosine similarity τ
+  inventory_path: "data/canonical_inventory"
+  embedding_dim: 384
+  faiss_nprobe: 16
+
+serving:
+  host: "0.0.0.0"
+  port: 8080
+  vllm_base_url: "http://localhost:8000"
+  vllm_model: "meta-llama/Llama-3.1-8B-Instruct"
+  enable_compression: true
+  enable_unification: true
+  log_path: "logs/promptfuse.jsonl"
+
+evaluation:
+  target_llm: "meta-llama/Llama-3.1-8B-Instruct"
+  compression_ratios: [0.25, 0.40, 0.55]
+  rouge_l_threshold: 0.85
+  latency_p99_ms: 50
+  cache_hit_multiplier: 2.0
+  speedup_target: 1.5

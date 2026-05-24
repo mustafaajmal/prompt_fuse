@@ -1,0 +1,21 @@
+Summarize the following paragraph in three sentences.
+Please give a three-sentence summary of the text below.
+Provide a brief 3-sentence summary of the following content.
+Classify the sentiment of the following review as positive, negative, or neutral.
+Determine whether this review is positive, negative, or neutral.
+Translate the following text from English to French.
+Convert the English text below into French.
+Write a Python function that implements the following specification.
+Generate Python code for the task described below.
+Answer the question based on the context provided.
+Using the context below, answer the question.
+Extract all named entities from the following text.
+Identify named entities in the passage below.
+Rewrite the following sentence to be more formal.
+Make the sentence below more formal in tone.
+Solve the following math word problem step by step.
+Work through this math problem showing each step.
+Brainstorm ten ideas for the topic below.
+Generate 10 creative ideas related to this topic.
+Compare and contrast the two passages below.
+Discuss similarities and differences between these two texts.
