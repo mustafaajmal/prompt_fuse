@@ -49,6 +49,9 @@ llmlingua = [
 promptfuse-serve = "promptfuse.middleware.server:main"
 promptfuse-benchmark = "promptfuse.evaluation.benchmark:main"
 promptfuse-demo = "promptfuse.evaluation.demo_runner:main"
+promptfuse-eval-unifier = "promptfuse.evaluation.unifier_eval:main_cli"
+promptfuse-eval-compression = "promptfuse.evaluation.compression_eval:main_cli"
+promptfuse-eval = "promptfuse.evaluation.full_eval:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

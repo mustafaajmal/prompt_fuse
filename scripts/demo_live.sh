@@ -35,23 +35,37 @@ python scripts/warm_demo_inventory.py --config configs/demo.yaml
 
 echo ""
 echo "[3/5] Paraphrase A (first request — expect cache miss)..."
-curl -s "$PF_URL/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages":[{"role":"user","content":"Summarize the following paragraph in three sentences."}],
-    "max_tokens": 64,
-    "temperature": 0
-  }' | python -c "import sys,json; d=json.load(sys.stdin); print('  Output:', d['choices'][0]['message']['content'][:120]+'...')"
+python - "$PF_URL" <<'PY'
+import json, sys, urllib.request
+url = sys.argv[1]
+prompt = (
+    "You are a document assistant. Background: Users paste long articles; "
+    "redundant boilerplate is common. Policy: preserve facts. Format: complete sentences.\n\n"
+    "Task: Summarize the following paragraph in three sentences."
+)
+body = json.dumps({"messages":[{"role":"user","content":prompt}],"max_tokens":64,"temperature":0}).encode()
+req = urllib.request.Request(f"{url}/v1/chat/completions", data=body, headers={"Content-Type":"application/json"})
+with urllib.request.urlopen(req) as r:
+    d = json.load(r)
+print("  Output:", d["choices"][0]["message"]["content"][:120] + "...")
+PY
 
 echo ""
 echo "[4/5] Paraphrase B (same meaning — expect unifier hit)..."
-curl -s "$PF_URL/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages":[{"role":"user","content":"Please give a three-sentence summary of the text below."}],
-    "max_tokens": 64,
-    "temperature": 0
-  }' | python -c "import sys,json; d=json.load(sys.stdin); print('  Output:', d['choices'][0]['message']['content'][:120]+'...')"
+python - "$PF_URL" <<'PY'
+import json, sys, urllib.request
+url = sys.argv[1]
+prompt = (
+    "You are a document assistant. Background: Users paste long articles; "
+    "redundant boilerplate is common. Policy: preserve facts. Format: complete sentences.\n\n"
+    "Task: Please give a three-sentence summary of the text below."
+)
+body = json.dumps({"messages":[{"role":"user","content":prompt}],"max_tokens":64,"temperature":0}).encode()
+req = urllib.request.Request(f"{url}/v1/chat/completions", data=body, headers={"Content-Type":"application/json"})
+with urllib.request.urlopen(req) as r:
+    d = json.load(r)
+print("  Output:", d["choices"][0]["message"]["content"][:120] + "...")
+PY
 
 echo ""
 echo "[5/5] PromptFuse stats..."

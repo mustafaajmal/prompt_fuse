@@ -6,131 +6,151 @@ CSE 232B | Spring 2026 | Aaron Sharif & Mustafa Ajmal
 
 PromptFuse is a middleware layer that sits before [vLLM](https://github.com/vllm-project/vllm) to reduce inference cost through two complementary optimizations:
 
-1. **Segment-level compression** — drops low-importance sentences using perplexity scores from a small proxy LM (Llama-3.2-1B), inspired by LLMLingua but at sentence granularity for grammatical validity.
-2. **Semantic unification** — maps paraphrased prompts to shared canonical forms via a fine-tuned bi-encoder and FAISS retrieval, enabling KV cache reuse beyond exact token-level prefix matching.
+1. **Segment-level compression** — drops low-importance sentences using perplexity scores from a small proxy LM (Llama-3.2-1B), with token-level fallback for short prompts.
+2. **Semantic unification** — maps paraphrased prompts to shared canonical forms via a bi-encoder and FAISS retrieval, enabling KV cache reuse beyond exact token-level prefix matching.
 
 ```
 raw_prompt → compressor → unifier → vLLM (prefix cache) → response
 ```
 
-## Goals
+## Goals (class demo)
 
 | Metric | Target |
 |--------|--------|
 | Token reduction | ≥ 30% |
-| KV cache hit rate | ≥ 2× over baseline |
-| Output quality (ROUGE-L) | ≥ 0.85 |
-| Pipeline latency overhead | < 50ms p99 |
-| End-to-end speedup | ≥ 1.5× |
+| Unifier hit rate (paraphrases) | high on synthetic clusters |
+| Output quality (ROUGE-L) | ≥ 0.85 vs raw |
+| Pipeline latency overhead | < 50ms p99 (unifier-only much lower) |
+| Prefix diversity reduction | full < raw in A/B experiment |
 
-## Quick Start
+## Quick Start (WSL2 — recommended)
 
-### Install
+**Use WSL2**, not Windows PowerShell. See **[WSL.md](WSL.md)** for the full flow.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+cd "/mnt/c/Users/Escalona Cribstafa 5/Documents/dev/prompt_fuse"
+./scripts/wsl_setup.sh
+# Add HF_TOKEN to .env, then:
+./scripts/wsl_prefetch_models.sh
+./scripts/start_vllm.sh          # terminal 1
+./scripts/start_promptfuse.sh    # terminal 2
 ```
 
-Optional extras:
+## Quick Start (Windows native — optional)
 
-```bash
-pip install -e ".[vllm]"       # vLLM serving backend
-pip install -e ".[llmlingua]"   # LLMLingua baseline comparison
+```powershell
+cd prompt_fuse
+.\scripts\setup.ps1
 ```
 
-### Generate synthetic paraphrase data
+This creates `.venv`, installs CUDA PyTorch + dependencies, generates paraphrase data, and warms `data/demo_canonical_inventory`.
 
-```bash
-python scripts/generate_synthetic_paraphrases.py
+**Hugging Face:** Accept licenses for [Llama-3.2-1B](https://huggingface.co/meta-llama/Llama-3.2-1B) and [Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct), then:
+
+```powershell
+.\.venv\Scripts\huggingface-cli.exe login
 ```
 
-### Build canonical inventory (warmup)
+### Start services (two terminals)
 
-```bash
-python scripts/build_canonical_inventory.py --prompts data/synthetic_paraphrases.json
+**Terminal 1 — vLLM**
+
+```powershell
+.\scripts\start_vllm.ps1
 ```
 
-### Fine-tune bi-encoder (optional)
+**Terminal 2 — PromptFuse**
 
-```bash
-python scripts/train_bi_encoder.py --data data/synthetic_paraphrases.json
+```powershell
+.\scripts\start_promptfuse.ps1
 ```
 
-Update `configs/default.yaml` with `unifier.fine_tuned_encoder: models/finetuned-minilm`.
+### Verify the novel contribution (no vLLM needed)
 
-### Run benchmark
-
-```bash
-promptfuse-benchmark --prompts data/sample_prompts.txt --compare-baselines
+```powershell
+$env:PROMPTFUSE_CONFIG = "configs\demo.yaml"
+.\.venv\Scripts\python.exe scripts\run_unifier_eval.py
 ```
 
-### In-class demo (see [DEMO.md](DEMO.md))
+Expect **≥70% subsequent hit rate** on paraphrase clusters (semantic unifier working).
+
+### Full evaluation suite
+
+```powershell
+# Pipeline + unifier metrics (vLLM optional)
+.\.venv\Scripts\python.exe scripts\run_full_eval.py --no-vllm
+
+# With vLLM for latency / ROUGE
+.\.venv\Scripts\python.exe scripts\run_full_eval.py --with-quality
+```
+
+Results land in `results/` (`unifier_eval.json`, `compression_eval.json`, `demo_metrics.json`).
+
+### Live in-class demo
+
+```powershell
+.\scripts\demo_live.ps1
+```
+
+Shows paraphrase A vs B → unified canonical → `/stats` unifier hit rate.
+
+## Linux / WSL2
 
 ```bash
-# Full experiment (vLLM + PromptFuse running)
-promptfuse-demo --config configs/demo.yaml
-
-# Live paraphrase demo
+chmod +x scripts/setup.sh scripts/demo_live.sh
+./scripts/setup.sh
 ./scripts/demo_live.sh
 ```
-
-### Serve middleware
-
-Start vLLM first:
-
-```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-8B-Instruct \
-  --enable-prefix-caching
-```
-
-Then start PromptFuse:
-
-```bash
-promptfuse-serve
-```
-
-Send requests to `http://localhost:8080/v1/chat/completions` (same OpenAI-compatible API as vLLM).
 
 ## Project Structure
 
 ```
 promptfuse/
-├── compressor/          # Segment-level token compressor (proxy LM perplexity)
-├── unifier/             # Semantic unifier + FAISS canonical store
-├── middleware/          # FastAPI server (vLLM proxy)
-├── evaluation/          # ROUGE-L, latency, cache hit metrics
-├── pipeline.py          # End-to-end orchestration
-└── config.py            # YAML-based configuration
+├── compressor/          # Segment + token-level proxy LM compression
+├── unifier/             # Bi-encoder + FAISS canonical store
+├── middleware/          # FastAPI vLLM proxy
+├── evaluation/          # Benchmarks, demo experiment, unifier/compression eval
+└── pipeline.py
+
+data/
+├── demo_workload.json       # 5 clusters for A/B/C demo
+├── complex_workload.json    # 8 RAG/agent-style clusters (stress test)
+└── synthetic_paraphrases.json  # 500 paraphrases / 50 categories
 
 scripts/
-├── generate_synthetic_paraphrases.py
-├── train_bi_encoder.py
-├── build_canonical_inventory.py
-└── prepare_datasets.py  # ShareGPT / LMSYS-Chat-1M sampling
-
-configs/default.yaml
-data/sample_prompts.txt
-tests/
+├── setup.ps1 / setup.sh
+├── run_full_eval.py
+├── run_unifier_eval.py
+├── run_compression_eval.py
+├── warm_demo_inventory.py
+└── train_bi_encoder.py
 ```
 
 ## Configuration
 
-Edit `configs/default.yaml`:
+`configs/demo.yaml` (recommended for presentation):
 
-- `compressor.compression_ratio` — target token reduction (0.25, 0.40, 0.55)
-- `unifier.similarity_threshold` — cosine similarity τ for canonical matching
-- `serving.vllm_base_url` — vLLM backend URL
+- `compressor.compression_ratio: 0.40`
+- `unifier.similarity_threshold: 0.78`
+- `unifier.inventory_path: data/demo_canonical_inventory`
 
-## Evaluation Baselines
+Override via environment: `PROMPTFUSE_CONFIG=configs/demo.yaml`
 
-The benchmark compares three modes:
+## Evaluation modes
 
-- **no_compression** — raw prompts, no prefix optimization
-- **compression_only** — segment compressor without unification (LLMLingua-style)
-- **promptfuse_full** — compression + semantic unification
+| Command | What it proves |
+|---------|----------------|
+| `run_unifier_eval.py` | Paraphrases map to same canonical (core novelty) |
+| `run_compression_eval.py` | ≥30% token reduction at 25/40/55% ratios |
+| `promptfuse-demo --no-vllm` | Prefix diversity: full < raw |
+| `promptfuse-demo` | End-to-end with vLLM prefix cache |
+| `run_quality_eval.py` | ROUGE-L ≥ 0.85 on model outputs |
+
+## API
+
+- `POST /v1/chat/completions` — OpenAI-compatible (forwards to vLLM after fuse)
+- `POST /v1/process` — compress + unify only (debug)
+- `GET /stats` — unifier hit rate, inventory size
 
 ## Models
 
@@ -138,17 +158,7 @@ The benchmark compares three modes:
 |------|-------|
 | Target LLM | Llama-3.1-8B-Instruct |
 | Proxy LM (compressor) | Llama-3.2-1B |
-| Bi-encoder (unifier) | all-MiniLM-L6-v2 (fine-tuned on paraphrase pairs) |
-
-## Datasets
-
-- **ShareGPT** — real user–LLM conversations
-- **LMSYS-Chat-1M** — production chat sessions
-- **Synthetic paraphrases** — 500 paraphrases across 50 instruction categories
-
-```bash
-python scripts/prepare_datasets.py --max-samples 500
-```
+| Bi-encoder (unifier) | all-MiniLM-L6-v2 (optional fine-tune) |
 
 ## Development
 

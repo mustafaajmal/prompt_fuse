@@ -1,71 +1,50 @@
 # PromptFuse — In-Class Demo Guide
 
-Run everything on your **RTX 6000 Ada** machine (Linux/WSL2 + CUDA).
+Run on your **RTX 6000 Ada** (Windows native, or WSL2 + CUDA for vLLM).
+
+See [README.md](README.md) for install. This guide is the presentation flow.
 
 ## 0. One-time setup
 
-```bash
+```powershell
 cd prompt_fuse
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-
-# CUDA PyTorch first
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-pip install -r requirements.txt
-
-export HF_TOKEN="hf_..."
-huggingface-cli login
+.\scripts\setup.ps1
+# Accept Llama 3.1 + 3.2 licenses on huggingface.co, then set HF_TOKEN in .env
 ```
 
-Request access to `meta-llama/Llama-3.2-1B` and `meta-llama/Llama-3.1-8B-Instruct` on Hugging Face.
+## 1. Start services
 
-## 1. Start services (two terminals)
+| Terminal | Command |
+|----------|---------|
+| 1 | `.\scripts\start_vllm.ps1` |
+| 2 | `.\scripts\start_promptfuse.ps1` |
 
-**Terminal 1 — vLLM**
+vLLM uses `--enable-prefix-caching` so shared prefixes reuse KV blocks.
 
-```bash
-source .venv/bin/activate
-export HF_TOKEN=...
+## 2. Prove the unifier works (30 seconds, no vLLM)
 
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-llama/Llama-3.1-8B-Instruct \
-  --enable-prefix-caching \
-  --port 8000 \
-  --gpu-memory-utilization 0.85 \
-  --max-model-len 4096
+```powershell
+.\.venv\Scripts\python.exe scripts\run_unifier_eval.py
 ```
 
-**Terminal 2 — PromptFuse middleware**
-
-```bash
-source .venv/bin/activate
-export PROMPTFUSE_CONFIG=configs/demo.yaml   # optional; server uses Settings()
-promptfuse-serve
-# Or: python -m promptfuse.middleware.server
-```
-
-Uses `configs/demo.yaml` (τ=0.80, demo inventory path).
-
-## 2. Warm demo inventory
-
-```bash
-source .venv/bin/activate
-python scripts/warm_demo_inventory.py --config configs/demo.yaml
-```
+Look for **subsequent hit rate ≥ 70%** on `data/synthetic_paraphrases.json`. This isolates the **semantic unification** contribution without compression or serving noise.
 
 ## 3. Live demo (60 seconds)
 
-```bash
-chmod +x scripts/demo_live.sh
-./scripts/demo_live.sh
+```powershell
+.\scripts\demo_live.ps1
 ```
 
-Shows two paraphrases → unified canonical → stats with unifier hit rate.
+1. Paraphrase A → first canonical registered  
+2. Paraphrase B → **unifier hit** → same prefix sent to vLLM  
+3. `/stats` shows `unifier_hit_rate` increasing  
 
 ## 4. Full A/B/C experiment
 
-Compares three modes on `data/demo_workload.json`:
+```powershell
+.\.venv\Scripts\python.exe scripts\run_demo_experiment.py --config configs\demo.yaml
+# or: .\.venv\Scripts\promptfuse-demo.exe
+```
 
 | Mode | What it shows |
 |------|----------------|
@@ -73,34 +52,63 @@ Compares three modes on `data/demo_workload.json`:
 | `compress_only` | Fewer tokens, paraphrases still differ |
 | `promptfuse_full` | Same canonical prefix → better cache behavior |
 
-```bash
-python scripts/run_demo_experiment.py --config configs/demo.yaml
-# Or: promptfuse-demo
+**Pipeline-only** (vLLM not up):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_demo_experiment.py --no-vllm
 ```
 
-Results: `results/demo_metrics.json` + printed summary table.
+**Complex prompts** (RAG / agent style):
 
-**Pipeline-only** (vLLM not up yet):
-
-```bash
-python scripts/run_demo_experiment.py --no-vllm --config configs/demo.yaml
+```powershell
+.\.venv\Scripts\python.exe scripts\run_demo_experiment.py --no-vllm --workload data\complex_workload.json --output-dir results\complex
 ```
 
-## 5. Output quality (ROUGE-L)
+## 5. Compression + quality
 
-```bash
-python scripts/run_quality_eval.py --config configs/demo.yaml --limit 10
+```powershell
+# Token reduction sweep (needs GPU for Llama-3.2-1B)
+.\.venv\Scripts\python.exe scripts\run_compression_eval.py
+
+# ROUGE-L on model outputs (needs vLLM)
+.\.venv\Scripts\python.exe scripts\run_quality_eval.py --limit 8
 ```
 
-Results: `results/quality_eval.json`
+## 6. Everything at once
 
-## 6. Optional: fine-tune bi-encoder
-
-```bash
-python scripts/train_bi_encoder.py --data data/synthetic_paraphrases.json
+```powershell
+.\.venv\Scripts\python.exe scripts\run_full_eval.py --no-vllm
+.\.venv\Scripts\python.exe scripts\run_full_eval.py --with-quality   # after vLLM is up
 ```
 
-Then in `configs/demo.yaml`:
+## 7. Slides — copy numbers from
+
+```powershell
+Get-Content results\demo_metrics.json | python -m json.tool
+Get-Content results\unifier_eval.json | python -m json.tool
+Get-Content results\compression_eval.json | python -m json.tool
+```
+
+Key fields:
+
+- `unifier_eval.json` → `subsequent_hit_rate`, `cluster_full_hit_rate`
+- `demo_metrics.json` → `key_findings.unifier_hit_rate`, `unification_reduces_prefix_diversity`
+- `compression_eval.json` → `meets_token_goal`, `by_ratio`
+
+## 8. Talking points
+
+1. **Problem**: vLLM prefix cache needs exact token match; paraphrases miss.  
+2. **Compress**: Sentence-level (proxy LM perplexity) → ~40% fewer tokens.  
+3. **Unify**: Bi-encoder + FAISS → one canonical per semantic cluster.  
+4. **Result**: `unique_final_prompts_per_cluster` drops; unifier hit rate rises; repeat requests faster.
+
+## Optional: fine-tune bi-encoder
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_bi_encoder.py
+```
+
+Then set in `configs/demo.yaml`:
 
 ```yaml
 unifier:
@@ -108,27 +116,12 @@ unifier:
   similarity_threshold: 0.85
 ```
 
-## 7. Presentation talking points
-
-1. **Problem**: vLLM prefix cache needs exact token match; paraphrases miss.
-2. **Compress**: Sentence-level drop (Llama-3.2-1B perplexity) → ~40% fewer tokens.
-3. **Unify**: Bi-encoder + FAISS → one canonical form per semantic cluster.
-4. **Result**: `unique_final_prompts_per_cluster` drops (raw → full); unifier hit rate rises; repeat requests faster.
-
-## 8. Slides — copy numbers from
-
-```bash
-cat results/demo_metrics.json | python -m json.tool
-cat results/quality_eval.json | python -m json.tool
-```
-
-Key fields: `key_findings.unifier_hit_rate`, `token_reduction_full`, `unification_reduces_prefix_diversity`.
-
 ## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
-| vLLM OOM | Lower `--gpu-memory-utilization 0.75` or `--max-model-len 2048` |
-| Unifier never hits | Use `configs/demo.yaml` (τ=0.80); run `warm_demo_inventory.py` |
-| Slow compressor | First run downloads Llama-3.2-1B; later runs cache weights |
-| `demo_live.sh` fails | Start both vLLM and `promptfuse-serve` first |
+| vLLM OOM on 48GB | `--gpu-memory-utilization 0.75` in `start_vllm.ps1` |
+| Unifier never hits | Run `warm_demo_inventory.py`; use `configs/demo.yaml` (τ=0.78) |
+| Slow first request | Downloads/caches Llama weights; later requests faster |
+| `demo_live.ps1` fails | Start both vLLM and PromptFuse first |
+| Python not found | Install Python 3.10+; re-run `setup.ps1` |

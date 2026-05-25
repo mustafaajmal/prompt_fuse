@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from promptfuse.config import Settings
-from promptfuse.unifier import SemanticUnifier
+from promptfuse.pipeline import PromptFusePipeline
 
 logger = logging.getLogger(__name__)
 
@@ -37,17 +37,21 @@ def main() -> None:
 
     settings = Settings(config_path=args.config)
     config = settings.load()
-    unifier = SemanticUnifier(config.unifier)
+    pipeline = PromptFusePipeline(config, lazy_load=False)
 
     prompts = load_prompts(args.prompts)
-    logger.info("Warming up inventory with %d prompts", len(prompts))
+    logger.info("Warming up inventory with %d prompts (compress → unify)", len(prompts))
 
-    warmup_data = [(p, unifier.count_tokens_approx(p)) for p in prompts]
-    unifier.warmup(warmup_data)
+    for p in prompts:
+        pipeline.process(p)
 
     out = args.output or Path(config.unifier.inventory_path)
-    unifier.store.save(out)
-    logger.info("Canonical inventory size: %d", unifier.store.size)
+    if pipeline.unifier:
+        pipeline.unifier.store.save(out)
+        logger.info("Canonical inventory size: %d", pipeline.unifier.store.size)
+    else:
+        logger.error("Unifier disabled in config")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

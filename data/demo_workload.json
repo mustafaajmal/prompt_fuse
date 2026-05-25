@@ -2,41 +2,41 @@
   {
     "cluster": "summarize",
     "prompts": [
-      "Summarize the following paragraph in three sentences.",
-      "Please give a three-sentence summary of the text below.",
-      "Provide a brief 3-sentence summary of the following content."
+      "You are a document assistant. Background: Users paste long articles; redundant boilerplate is common. Policy: preserve facts. Format: complete sentences.\n\nTask: Summarize the following paragraph in three sentences.",
+      "You are a document assistant. Background: Users paste long articles; redundant boilerplate is common. Policy: preserve facts. Format: complete sentences.\n\nTask: Please give a three-sentence summary of the text below.",
+      "You are a document assistant. Background: Users paste long articles; redundant boilerplate is common. Policy: preserve facts. Format: complete sentences.\n\nTask: Provide a brief 3-sentence summary of the following content."
     ]
   },
   {
     "cluster": "sentiment",
     "prompts": [
-      "Classify the sentiment of the following review as positive, negative, or neutral.",
-      "Determine whether this review is positive, negative, or neutral.",
-      "What is the sentiment of the review below? Choose positive, negative, or neutral."
+      "System: moderation classifier. Noise: production dashboards include long policy text. Constraint: one label only.\n\nTask: Classify the sentiment of the following review as positive, negative, or neutral.",
+      "System: moderation classifier. Noise: production dashboards include long policy text. Constraint: one label only.\n\nTask: Determine whether this review is positive, negative, or neutral.",
+      "System: moderation classifier. Noise: production dashboards include long policy text. Constraint: one label only.\n\nTask: What is the sentiment of the review below? Choose positive, negative, or neutral."
     ]
   },
   {
     "cluster": "translation",
     "prompts": [
-      "Translate the following text from English to French.",
-      "Convert the English text below into French.",
-      "Please translate this passage to French."
+      "You are a translation agent. Note: source text may include formatting artifacts and repeated headers.\n\nTask: Translate the following text from English to French.",
+      "You are a translation agent. Note: source text may include formatting artifacts and repeated headers.\n\nTask: Convert the English text below into French.",
+      "You are a translation agent. Note: source text may include formatting artifacts and repeated headers.\n\nTask: Please translate this passage to French."
     ]
   },
   {
     "cluster": "question_answering",
     "prompts": [
-      "Answer the question based on the context provided.",
-      "Using the context below, answer the question.",
-      "Read the context and respond to the question."
+      "You answer questions from provided context. Reminder: cite only what appears in the context block.\n\nTask: Answer the question based on the context provided.",
+      "You answer questions from provided context. Reminder: cite only what appears in the context block.\n\nTask: Using the context below, answer the question.",
+      "You answer questions from provided context. Reminder: cite only what appears in the context block.\n\nTask: Read the context and respond to the question."
     ]
   },
   {
     "cluster": "code_generation",
     "prompts": [
-      "Write a Python function that implements the following specification.",
-      "Generate Python code for the task described below.",
-      "Create a Python function matching this specification."
+      "IDE coding assistant. Standards: readable Python, no execution. Padding: specs may be verbose.\n\nTask: Write a Python function that implements the following specification.",
+      "IDE coding assistant. Standards: readable Python, no execution. Padding: specs may be verbose.\n\nTask: Generate Python code for the task described below.",
+      "IDE coding assistant. Standards: readable Python, no execution. Padding: specs may be verbose.\n\nTask: Create a Python function matching this specification."
     ]
   }
 ]

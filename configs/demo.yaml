@@ -9,7 +9,7 @@ compressor:
 unifier:
   encoder_model: "sentence-transformers/all-MiniLM-L6-v2"
   fine_tuned_encoder: null
-  similarity_threshold: 0.80
+  similarity_threshold: 0.78
   inventory_path: "data/demo_canonical_inventory"
   embedding_dim: 384
   faiss_nprobe: 16

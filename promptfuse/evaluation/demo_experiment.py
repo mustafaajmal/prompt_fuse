@@ -117,12 +117,17 @@ def run_mode(
     max_tokens: int = 64,
     repeats: int = 2,
     reset_inventory: bool = True,
+    warm_inventory: bool = False,
 ) -> list[RequestRecord]:
     """Run all clusters for one experiment mode."""
     records: list[RequestRecord] = []
 
-    if mode == "promptfuse_full" and reset_inventory and config.unifier:
-        _reset_inventory(Path(config.unifier.inventory_path))
+    if mode == "promptfuse_full" and config.unifier:
+        inv_path = Path(config.unifier.inventory_path)
+        if reset_inventory and not warm_inventory:
+            _reset_inventory(inv_path)
+        elif warm_inventory and not inv_path.exists():
+            logger.warning("warm_inventory requested but %s missing — run warm_demo_inventory.py", inv_path)
 
     pipeline = _build_pipeline(config, mode, lazy_load=False)
 
@@ -149,7 +154,13 @@ def run_mode(
                         processed.compression.original_tokens if processed.compression else None
                     ),
                     final_tokens=(
-                        processed.compression.compressed_tokens if processed.compression else None
+                        processed.compression.compressed_tokens
+                        if processed.compression
+                        else (
+                            len(processed.final_prompt.split())
+                            if processed.final_prompt
+                            else None
+                        )
                     ),
                     pipeline_ms=processed.total_ms,
                     vllm_latency_ms=None,
@@ -235,6 +246,7 @@ def run_full_experiment(
     max_tokens: int = 64,
     use_vllm: bool = True,
     output_dir: Path = Path("results"),
+    warm_inventory: bool = False,
 ) -> dict[str, Any]:
     settings = Settings(config_path=config_path) if config_path else Settings()
     config = settings.load()
@@ -275,7 +287,8 @@ def run_full_experiment(
             compression_ratio=compression_ratio,
             vllm_client=effective_vllm,
             max_tokens=max_tokens,
-            reset_inventory=True,
+            reset_inventory=not warm_inventory,
+            warm_inventory=warm_inventory,
         )
         all_records.extend(records)
         summaries.append(summarize_mode(records))

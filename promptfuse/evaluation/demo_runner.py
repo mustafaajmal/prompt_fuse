@@ -23,6 +23,11 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("results"))
     parser.add_argument("--no-vllm", action="store_true")
     parser.add_argument(
+        "--warm-inventory",
+        action="store_true",
+        help="Use pre-built demo inventory (run warm_demo_inventory.py first)",
+    )
+    parser.add_argument(
         "--modes",
         nargs="+",
         choices=["raw_vllm", "compress_only", "promptfuse_full", "pipeline_only"],
@@ -46,6 +51,7 @@ def main() -> None:
         max_tokens=args.max_tokens,
         use_vllm=not args.no_vllm,
         output_dir=args.output_dir,
+        warm_inventory=args.warm_inventory,
     )
     print_summary_table(comparison)
     logger.info("Results saved to %s", comparison.get("_output_file"))

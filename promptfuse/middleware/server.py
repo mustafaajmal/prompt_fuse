@@ -33,11 +33,29 @@ class ChatCompletionRequest(BaseModel):
     extra_body: dict[str, Any] = Field(default_factory=dict)
 
 
+class ProcessRequest(BaseModel):
+    prompt: str
+    compression_ratio: float | None = None
+
+
+class ProcessResponse(BaseModel):
+    raw_prompt: str
+    final_prompt: str
+    token_reduction: float
+    cache_hit: bool
+    compression_ms: float
+    unification_ms: float
+    total_ms: float
+    unifier_similarity: float | None = None
+    canonical_id: int | None = None
+
+
 class PromptFuseServer:
     """Middleware that compresses/unifies prompts before forwarding to vLLM."""
 
-    def __init__(self, config: PromptFuseConfig | None = None):
-        self.config = config or Settings().load()
+    def __init__(self, config: PromptFuseConfig | None = None, *, config_path: str | Path | None = None):
+        settings = Settings(config_path=Path(config_path)) if config_path else Settings()
+        self.config = config or settings.load()
         self.pipeline = PromptFusePipeline(self.config, lazy_load=True)
         self.log_path = Path(self.config.serving.log_path)
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,11 +63,51 @@ class PromptFuseServer:
 
         self.app = FastAPI(title="PromptFuse", version="0.1.0")
         self._register_routes()
+        self._register_lifespan()
+
+    def _register_lifespan(self) -> None:
+        @self.app.on_event("startup")
+        async def _warm_models() -> None:
+            if self.pipeline.unifier:
+                self.pipeline.unifier._load_encoder()
+            if self.pipeline.compressor:
+                try:
+                    self.pipeline.compressor._load_model()
+                except Exception as exc:
+                    logger.warning(
+                        "Compressor not preloaded (%s). Set HF_TOKEN and restart, "
+                        "or compression requests will fail until models are cached.",
+                        exc,
+                    )
 
     def _register_routes(self) -> None:
         @self.app.get("/health")
         async def health() -> dict[str, str]:
             return {"status": "ok", "service": "promptfuse"}
+
+        @self.app.post("/process", response_model=ProcessResponse)
+        @self.app.post("/v1/process", response_model=ProcessResponse)
+        async def process_prompt(request: ProcessRequest) -> ProcessResponse:
+            """Run compress+unify without calling vLLM (debug / demo)."""
+            result = self.pipeline.process(
+                request.prompt,
+                compression_ratio=request.compression_ratio,
+            )
+            return ProcessResponse(
+                raw_prompt=result.raw_prompt,
+                final_prompt=result.final_prompt,
+                token_reduction=result.token_reduction,
+                cache_hit=result.cache_hit,
+                compression_ms=result.compression_ms,
+                unification_ms=result.unification_ms,
+                total_ms=result.total_ms,
+                unifier_similarity=(
+                    result.unification.similarity if result.unification else None
+                ),
+                canonical_id=(
+                    result.unification.canonical_id if result.unification else None
+                ),
+            )
 
         @self.app.get("/stats")
         async def stats() -> dict[str, Any]:
@@ -80,25 +138,27 @@ class PromptFuseServer:
             body = {**body, "prompt": processed.final_prompt}
             return await self._forward_vllm("/v1/completions", body)
 
-    def _extract_prompt(self, messages: list[ChatMessage]) -> str:
-        """Concatenate messages into a single prompt string for processing."""
-        parts = []
-        for msg in messages:
-            parts.append(f"{msg.role}: {msg.content}")
-        return "\n".join(parts)
+    def _process_user_messages(self, messages: list[ChatMessage]) -> tuple[list[dict[str, str]], Any]:
+        """Compress/unify only the last user turn; keep system/assistant text intact."""
+        forwarded: list[dict[str, str]] = []
+        last_user_idx = None
+        for i, msg in enumerate(messages):
+            if msg.role == "user":
+                last_user_idx = i
+
+        processed = None
+        for i, msg in enumerate(messages):
+            if i == last_user_idx:
+                processed = self.pipeline.process(msg.content)
+                forwarded.append({"role": msg.role, "content": processed.final_prompt})
+            else:
+                forwarded.append({"role": msg.role, "content": msg.content})
+        return forwarded, processed
 
     async def _handle_chat(self, request: ChatCompletionRequest) -> dict[str, Any]:
-        raw = self._extract_prompt(request.messages)
-        processed = self.pipeline.process(raw)
-        self._log_event("chat", processed, request.model_dump())
-
-        # Replace user message content with unified prompt for prefix cache alignment
-        forwarded_messages = []
-        for i, msg in enumerate(request.messages):
-            if i == len(request.messages) - 1 and msg.role == "user":
-                forwarded_messages.append({"role": msg.role, "content": processed.final_prompt})
-            else:
-                forwarded_messages.append({"role": msg.role, "content": msg.content})
+        forwarded_messages, processed = self._process_user_messages(request.messages)
+        if processed:
+            self._log_event("chat", processed, request.model_dump())
 
         payload = {
             "model": request.model or self.config.serving.vllm_model,
@@ -168,12 +228,21 @@ class PromptFuseServer:
 def create_app(config_path: str | None = None) -> FastAPI:
     settings = Settings(config_path=Path(config_path)) if config_path else Settings()
     config = settings.load()
-    return PromptFuseServer(config).app
+    return PromptFuseServer(config, config_path=config_path).app
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    server = PromptFuseServer(Settings().load())
+    settings = Settings()
+    config = settings.load()
+    server = PromptFuseServer(config, config_path=settings.config_path)
+    logger.info(
+        "PromptFuse listening on %s:%s → vLLM %s (config: %s)",
+        config.serving.host,
+        config.serving.port,
+        config.serving.vllm_base_url,
+        settings.config_path,
+    )
     server.run()
 
 

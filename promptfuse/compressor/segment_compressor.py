@@ -96,7 +96,7 @@ class SegmentCompressor:
         return len(self._tokenizer.encode(text, add_special_tokens=False))
 
     def _segment_perplexity(self, segment: str) -> float:
-        """Lower perplexity => higher importance (more predictable / structural)."""
+        """Higher perplexity => more informative content (LLMLingua-style importance)."""
         self._load_model()
         assert self._tokenizer is not None and self._model is not None and self._device is not None
 
@@ -108,13 +108,63 @@ class SegmentCompressor:
         )
         input_ids = inputs["input_ids"].to(self._device)
         if input_ids.shape[1] < 2:
-            return float("inf")
+            return 0.0
 
         with torch.no_grad():
             outputs = self._model(input_ids, labels=input_ids)
             loss = outputs.loss.item()
 
         return float(torch.exp(torch.tensor(loss)).item())
+
+    def _token_importance_scores(self, prompt: str) -> list[tuple[int, float]]:
+        """Per-token loss (higher = more important to keep)."""
+        self._load_model()
+        assert self._tokenizer is not None and self._model is not None and self._device is not None
+
+        inputs = self._tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.config.max_length,
+        )
+        input_ids = inputs["input_ids"].to(self._device)
+        if input_ids.shape[1] < 2:
+            return []
+
+        with torch.no_grad():
+            outputs = self._model(input_ids)
+            logits = outputs.logits[:, :-1, :]
+            labels = input_ids[:, 1:]
+            loss_fn = torch.nn.CrossEntropyLoss(reduction="none")
+            per_token = loss_fn(
+                logits.reshape(-1, logits.size(-1)),
+                labels.reshape(-1),
+            )
+
+        scores = [(i + 1, float(per_token[i].item())) for i in range(per_token.shape[0])]
+        return scores
+
+    def _compress_token_level(self, prompt: str, target_tokens: int) -> str:
+        """Drop low-importance tokens when sentence segmentation cannot reach target ratio."""
+        self._load_model()
+        assert self._tokenizer is not None
+
+        token_scores = self._token_importance_scores(prompt)
+        if not token_scores:
+            return prompt
+
+        ids = self._tokenizer.encode(prompt, add_special_tokens=False)
+        if len(ids) <= target_tokens:
+            return prompt
+
+        ranked = sorted(token_scores, key=lambda x: x[1])
+        drop_positions = {pos for pos, _ in ranked[: max(0, len(ids) - target_tokens)]}
+
+        kept_ids = [tid for i, tid in enumerate(ids) if i not in drop_positions]
+        if not kept_ids:
+            kept_ids = ids[:target_tokens]
+
+        return self._tokenizer.decode(kept_ids, skip_special_tokens=True)
 
     def compress(self, prompt: str, compression_ratio: float | None = None) -> CompressionResult:
         """
@@ -142,19 +192,39 @@ class SegmentCompressor:
         original_tokens = self.count_tokens(prompt)
         target_tokens = max(1, int(original_tokens * (1.0 - ratio)))
 
+        if len(segments) <= 1 and original_tokens > target_tokens:
+            compressed = self._compress_token_level(prompt, target_tokens)
+            compressed_tokens = self.count_tokens(compressed)
+            return CompressionResult(
+                original=prompt,
+                compressed=compressed,
+                original_tokens=original_tokens,
+                compressed_tokens=compressed_tokens,
+                segments_kept=len(segments),
+                segments_total=len(segments),
+            )
+
         scored: list[tuple[str, float, int]] = []
         for seg in segments:
             tok_count = self.count_tokens(seg)
             ppl = self._segment_perplexity(seg)
             scored.append((seg, ppl, tok_count))
 
-        # Keep segments with lowest perplexity (most important / structural)
-        scored.sort(key=lambda x: x[1])
+        # Keep highest-perplexity segments first (informative content).
+        # Always retain the first segment as the instruction anchor.
+        anchor = segments[0]
+        scored.sort(key=lambda x: x[1], reverse=True)
 
         kept: list[str] = []
         kept_tokens = 0
+        anchor_tokens = next(t for s, _, t in scored if s == anchor)
+        kept.append(anchor)
+        kept_tokens += anchor_tokens
+
         for seg, _, tok_count in scored:
-            if kept_tokens + tok_count <= target_tokens or not kept:
+            if seg == anchor:
+                continue
+            if kept_tokens + tok_count <= target_tokens or len(kept) <= 1:
                 kept.append(seg)
                 kept_tokens += tok_count
             if kept_tokens >= target_tokens:
@@ -165,6 +235,13 @@ class SegmentCompressor:
 
         compressed = " ".join(ordered)
         compressed_tokens = self.count_tokens(compressed)
+
+        if compressed_tokens > target_tokens and len(segments) <= 2:
+            compressed = self._compress_token_level(prompt, target_tokens)
+            compressed_tokens = self.count_tokens(compressed)
+        elif compressed_tokens > target_tokens:
+            compressed = self._compress_token_level(compressed, target_tokens)
+            compressed_tokens = self.count_tokens(compressed)
 
         return CompressionResult(
             original=prompt,

@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Generate complex multi-sentence prompts for evaluation (RAG / agent style)."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+# Shared verbose context blocks (compressible filler + task paraphrases)
+CONTEXT_SUMMARY = (
+    "You are a helpful assistant embedded in a document analysis pipeline. "
+    "The pipeline receives long-form text from enterprise customers and must preserve factual accuracy. "
+    "Background: The following excerpt may contain redundant phrasing, marketing language, and procedural boilerplate. "
+    "Internal note: Prior runs showed that users often paste entire articles; compression upstream reduces cost. "
+    "Reference material: Lorem ipsum sections and policy disclaimers are included only to inflate token count for testing. "
+    "Policy: Do not invent facts. If the source is ambiguous, state uncertainty explicitly. "
+    "Formatting: Use complete sentences. Avoid bullet lists unless the user requests them. "
+)
+
+CONTEXT_CLASSIFY = (
+    "System role: You classify user-generated content for a moderation dashboard. "
+    "The dashboard aggregates reviews, tickets, and social posts. "
+    "Reminder: Labels must be exactly one of the allowed categories per request. "
+    "Historical context: Classifiers were retrained in Q3 after label drift was detected on neutral examples. "
+    "Noise paragraph: This block exists to simulate RAG chunks and long system prompts seen in production agents. "
+    "Operational constraint: Respond with a single label and optionally one short justification sentence. "
+)
+
+CONTEXT_CODE = (
+    "You are a coding assistant integrated into an IDE plugin. "
+    "The plugin sends partial specifications and expects executable Python. "
+    "Standards: Prefer readable variable names, type hints when obvious, and docstrings only for public APIs. "
+    "Safety: Do not execute code; only emit source. "
+    "Padding: Enterprise customers often attach lengthy requirement documents; this paragraph simulates that overhead. "
+    "Testing note: Unit tests are out of scope unless explicitly requested by the user instruction below. "
+)
+
+CLUSTERS = [
+    {
+        "cluster": "summarize_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Summarize the following paragraph in three sentences.",
+            "Please give a three-sentence summary of the text below.",
+            "Provide a brief 3-sentence summary of the following content.",
+            "Condense the paragraph below into exactly three sentences.",
+        ],
+    },
+    {
+        "cluster": "sentiment_rag",
+        "context": CONTEXT_CLASSIFY,
+        "prompts": [
+            "Classify the sentiment of the following review as positive, negative, or neutral.",
+            "Determine whether this review is positive, negative, or neutral.",
+            "What is the sentiment of the review below? Choose positive, negative, or neutral.",
+        ],
+    },
+    {
+        "cluster": "translation_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Translate the following text from English to French.",
+            "Convert the English text below into French.",
+            "Please translate this passage to French.",
+        ],
+    },
+    {
+        "cluster": "qa_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Answer the question based on the context provided.",
+            "Using the context below, answer the question.",
+            "Read the context and respond to the question.",
+        ],
+    },
+    {
+        "cluster": "code_agent",
+        "context": CONTEXT_CODE,
+        "prompts": [
+            "Write a Python function that implements the following specification.",
+            "Generate Python code for the task described below.",
+            "Create a Python function matching this specification.",
+        ],
+    },
+    {
+        "cluster": "extraction_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Extract all named entities from the following text.",
+            "Identify named entities in the passage below.",
+            "List the named entities found in this text.",
+        ],
+    },
+    {
+        "cluster": "reasoning_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Solve the following math word problem step by step.",
+            "Work through this math problem showing each step.",
+            "Provide a step-by-step solution to the problem below.",
+        ],
+    },
+    {
+        "cluster": "comparison_rag",
+        "context": CONTEXT_SUMMARY,
+        "prompts": [
+            "Compare and contrast the two passages below.",
+            "Discuss similarities and differences between these two texts.",
+            "Provide a comparison of the following two excerpts.",
+        ],
+    },
+]
+
+
+def build_workload() -> list[dict]:
+    out = []
+    for c in CLUSTERS:
+        full_prompts = [f"{c['context']}\n\nTask: {p}" for p in c["prompts"]]
+        out.append({"cluster": c["cluster"], "prompts": full_prompts})
+    return out
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, default=Path("data/complex_workload.json"))
+    args = parser.parse_args()
+
+    workload = build_workload()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(workload, f, indent=2)
+
+    n_prompts = sum(len(c["prompts"]) for c in workload)
+    print(f"Wrote {len(workload)} clusters, {n_prompts} prompts to {args.output}")
+
+
+if __name__ == "__main__":
+    main()
