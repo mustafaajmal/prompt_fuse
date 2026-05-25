@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch
+import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 if TYPE_CHECKING:
@@ -26,6 +27,8 @@ class CompressionResult:
     compressed_tokens: int
     segments_kept: int
     segments_total: int
+    target_tokens: int = 0
+    protected_segments_kept: int = 0
 
     @property
     def token_reduction(self) -> float:
@@ -64,6 +67,7 @@ class SegmentCompressor:
         self._tokenizer = None
         self._model = None
         self._device: torch.device | None = None
+        self._protected_res = [re.compile(pat, re.IGNORECASE) for pat in self.config.preserve_patterns]
 
         if not lazy_load:
             self._load_model()
@@ -83,6 +87,8 @@ class SegmentCompressor:
         self._device = self._resolve_device()
         logger.info("Loading proxy LM %s on %s", self.config.proxy_model, self._device)
         self._tokenizer = AutoTokenizer.from_pretrained(self.config.proxy_model)
+        if self._tokenizer.pad_token is None:
+            self._tokenizer.pad_token = self._tokenizer.eos_token
         self._model = AutoModelForCausalLM.from_pretrained(
             self.config.proxy_model,
             torch_dtype=torch.float16 if self._device.type == "cuda" else torch.float32,
@@ -95,26 +101,57 @@ class SegmentCompressor:
         assert self._tokenizer is not None
         return len(self._tokenizer.encode(text, add_special_tokens=False))
 
-    def _segment_perplexity(self, segment: str) -> float:
-        """Lower perplexity => higher importance (more predictable / structural)."""
+    def _segment_perplexities(self, segments: list[str]) -> list[float]:
+        """
+        Compute perplexity for all segments in one batched forward pass.
+
+        Lower perplexity => lower importance (more redundant under the proxy LM).
+        """
         self._load_model()
         assert self._tokenizer is not None and self._model is not None and self._device is not None
+        if not segments:
+            return []
 
         inputs = self._tokenizer(
-            segment,
+            segments,
             return_tensors="pt",
+            padding=True,
             truncation=True,
             max_length=self.config.max_length,
         )
         input_ids = inputs["input_ids"].to(self._device)
+        attention_mask = inputs["attention_mask"].to(self._device)
         if input_ids.shape[1] < 2:
-            return float("inf")
+            return [float("inf")] * len(segments)
+
+        labels = input_ids.clone()
+        labels[attention_mask == 0] = -100
 
         with torch.no_grad():
-            outputs = self._model(input_ids, labels=input_ids)
-            loss = outputs.loss.item()
+            outputs = self._model(input_ids=input_ids, attention_mask=attention_mask)
+            logits = outputs.logits[:, :-1, :]
+            shift_labels = labels[:, 1:]
 
-        return float(torch.exp(torch.tensor(loss)).item())
+            token_loss = F.cross_entropy(
+                logits.reshape(-1, logits.shape[-1]),
+                shift_labels.reshape(-1),
+                reduction="none",
+                ignore_index=-100,
+            ).reshape(shift_labels.shape[0], shift_labels.shape[1])
+            valid = shift_labels != -100
+            valid_counts = valid.sum(dim=1)
+            summed_loss = (token_loss * valid).sum(dim=1)
+
+            per_segment_loss = torch.full_like(summed_loss, fill_value=float("inf"), dtype=torch.float32)
+            non_empty = valid_counts > 0
+            per_segment_loss[non_empty] = summed_loss[non_empty] / valid_counts[non_empty]
+            per_segment_ppl = torch.exp(per_segment_loss)
+
+        return [float(x.item()) for x in per_segment_ppl]
+
+    def _is_protected_segment(self, segment: str) -> bool:
+        """Keep critical instruction-like segments even under aggressive compression."""
+        return any(pattern.search(segment) for pattern in self._protected_res)
 
     def compress(self, prompt: str, compression_ratio: float | None = None) -> CompressionResult:
         """
@@ -137,34 +174,54 @@ class SegmentCompressor:
                 compressed_tokens=tokens,
                 segments_kept=0,
                 segments_total=0,
+                target_tokens=tokens,
+                protected_segments_kept=0,
             )
 
-        original_tokens = self.count_tokens(prompt)
+        token_cache: dict[str, int] = {}
+
+        def token_count(text: str) -> int:
+            if text not in token_cache:
+                token_cache[text] = self.count_tokens(text)
+            return token_cache[text]
+
+        original_tokens = token_count(prompt)
         target_tokens = max(1, int(original_tokens * (1.0 - ratio)))
 
-        scored: list[tuple[str, float, int]] = []
-        for seg in segments:
-            tok_count = self.count_tokens(seg)
-            ppl = self._segment_perplexity(seg)
-            scored.append((seg, ppl, tok_count))
+        segment_tokens = [token_count(seg) for seg in segments]
+        segment_ppl = self._segment_perplexities(segments)
 
-        # Keep segments with lowest perplexity (most important / structural)
-        scored.sort(key=lambda x: x[1])
+        protected_indices = [idx for idx, seg in enumerate(segments) if self._is_protected_segment(seg)]
+        protected_set = set(protected_indices)
 
-        kept: list[str] = []
-        kept_tokens = 0
-        for seg, _, tok_count in scored:
-            if kept_tokens + tok_count <= target_tokens or not kept:
-                kept.append(seg)
+        # Keep protected segments first, then high-perplexity (informative) segments until budget is met.
+        kept_indices: list[int] = list(protected_indices)
+        kept_index_set = set(kept_indices)
+        kept_tokens = sum(segment_tokens[idx] for idx in kept_indices)
+
+        ranked_indices = sorted(
+            (idx for idx in range(len(segments)) if idx not in protected_set),
+            key=lambda idx: segment_ppl[idx],
+            reverse=True,
+        )
+        for idx in ranked_indices:
+            tok_count = segment_tokens[idx]
+            if kept_tokens + tok_count <= target_tokens or not kept_indices:
+                kept_indices.append(idx)
+                kept_index_set.add(idx)
                 kept_tokens += tok_count
             if kept_tokens >= target_tokens:
                 break
 
-        kept_texts = set(kept)
-        ordered = [seg for seg in segments if seg in kept_texts]
+        if not kept_indices:
+            best_idx = max(range(len(segments)), key=lambda i: segment_ppl[i])
+            kept_indices = [best_idx]
+            kept_index_set = {best_idx}
+
+        ordered = [seg for idx, seg in enumerate(segments) if idx in kept_index_set]
 
         compressed = " ".join(ordered)
-        compressed_tokens = self.count_tokens(compressed)
+        compressed_tokens = token_count(compressed)
 
         return CompressionResult(
             original=prompt,
@@ -173,4 +230,6 @@ class SegmentCompressor:
             compressed_tokens=compressed_tokens,
             segments_kept=len(ordered),
             segments_total=len(segments),
+            target_tokens=target_tokens,
+            protected_segments_kept=sum(1 for idx in kept_indices if idx in protected_set),
         )

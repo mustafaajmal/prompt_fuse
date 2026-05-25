@@ -25,6 +25,8 @@ raw_prompt → compressor → unifier → vLLM (prefix cache) → response
 
 ## Quick Start
 
+For the complete local CPU workflow (artifacts, diagnostics, and handoff expectations), see `CPU_README.md`.
+
 ### Install
 
 ```bash
@@ -43,7 +45,7 @@ pip install -e ".[llmlingua]"   # LLMLingua baseline comparison
 ### Generate synthetic paraphrase data
 
 ```bash
-python scripts/generate_synthetic_paraphrases.py
+python scripts/generate_synthetic_paraphrases.py --target-size 500 --clusters 50
 ```
 
 ### Build canonical inventory (warmup)
@@ -63,7 +65,23 @@ Update `configs/default.yaml` with `unifier.fine_tuned_encoder: models/finetuned
 ### Run benchmark
 
 ```bash
-promptfuse-benchmark --prompts data/sample_prompts.txt --compare-baselines
+# Multi-sentence prompts (compression); use synthetic JSON for unifier-heavy eval
+promptfuse-benchmark --prompts data/long_prompts.txt --compare-baselines
+promptfuse-benchmark --prompts data/synthetic_paraphrases.json --compare-baselines
+```
+
+See [ROADMAP.md](ROADMAP.md) for project status and remaining GPU work.
+
+### Run full CPU pipeline (artifacts + summaries)
+
+```bash
+python scripts/run_cpu_pipeline.py
+```
+
+### Run CPU readiness checks
+
+```bash
+python scripts/run_cpu_readiness_checks.py
 ```
 
 ### Serve middleware
@@ -99,7 +117,11 @@ scripts/
 ├── generate_synthetic_paraphrases.py
 ├── train_bi_encoder.py
 ├── build_canonical_inventory.py
-└── prepare_datasets.py  # ShareGPT / LMSYS-Chat-1M sampling
+├── prepare_datasets.py          # ShareGPT / LMSYS-Chat-1M sampling
+├── tau_sweep.py                 # CPU threshold sweep for semantic unifier
+├── compressor_diagnostics.py    # Per-segment keep/drop diagnostics
+├── aggregate_results.py         # Merge metric artifacts into summary JSON/CSV
+└── run_cpu_pipeline.py          # One-command CPU artifact pipeline
 
 configs/default.yaml
 data/sample_prompts.txt
@@ -111,16 +133,32 @@ tests/
 Edit `configs/default.yaml`:
 
 - `compressor.compression_ratio` — target token reduction (0.25, 0.40, 0.55)
+- `compressor.preserve_patterns` — regex guardrails for instruction segments that should not be dropped
 - `unifier.similarity_threshold` — cosine similarity τ for canonical matching
 - `serving.vllm_base_url` — vLLM backend URL
+- `serving.vllm_metrics_url` — optional metrics endpoint to proxy via `/v1/metrics/vllm-cache`
+- `serving.vllm_timeout_s` — upstream timeout for vLLM requests
 
 ## Evaluation Baselines
 
-The benchmark compares three modes:
+The benchmark includes five modes in a normalized schema:
 
 - **no_compression** — raw prompts, no prefix optimization
 - **compression_only** — segment compressor without unification (LLMLingua-style)
 - **promptfuse_full** — compression + semantic unification
+- **llmlingua_only** — adapter placeholder with graceful unavailable status in CPU-only runs
+- **exact_cache_only_stub** — vLLM cache-only placeholder for CPU workflows
+
+## CPU Artifact Outputs
+
+Running `python scripts/run_cpu_pipeline.py` writes artifacts under `results/cpu_final/`:
+
+- `metrics/benchmark_ratio_*.json` — per-ratio normalized baseline artifacts
+- `metrics/tau_sweep.json` — threshold sweep diagnostics
+- `summary.json` + `summary.csv` — merged report-friendly outputs
+- `logs/*.log` — command logs for each pipeline step
+- `notes/pipeline_report.json` — run status and failure diagnostics
+- `configs/final_cpu.yaml` — config snapshot used for CPU run
 
 ## Models
 

@@ -1,10 +1,21 @@
 # PromptFuse default configuration
 
 compressor:
-  proxy_model: "meta-llama/Llama-3.2-1B"
+  proxy_model: "openai-community/gpt2"
   compression_ratio: 0.40  # target token reduction (0.25, 0.40, 0.55)
   device: "auto"
-  max_length: 4096
+  max_length: 1024  # GPT-2 context window; raise when using Llama-3.2-1B
+  preserve_patterns:  # keep critical instructions even at higher compression ratios
+    - "\\bmust\\b"
+    - "\\bexactly\\b"
+    - "\\bonly\\b"
+    - "\\bdo not\\b"
+    - "\\bdon't\\b"
+    - "\\breturn\\b"
+    - "\\bformat\\b"
+    - "\\bjson\\b"
+    - "\\bxml\\b"
+    - "\\bstep by step\\b"
 
 unifier:
   encoder_model: "sentence-transformers/all-MiniLM-L6-v2"
@@ -18,6 +29,8 @@ serving:
   host: "0.0.0.0"
   port: 8080
   vllm_base_url: "http://localhost:8000"
+  vllm_metrics_url: null  # optional metrics endpoint (e.g., Prometheus scrape URL)
+  vllm_timeout_s: 300.0
   vllm_model: "meta-llama/Llama-3.1-8B-Instruct"
   enable_compression: true
   enable_unification: true
