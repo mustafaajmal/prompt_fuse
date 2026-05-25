@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class CompressorConfig(BaseModel):
@@ -20,7 +20,7 @@ class CompressorConfig(BaseModel):
 class UnifierConfig(BaseModel):
     encoder_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     fine_tuned_encoder: str | None = None
-    similarity_threshold: float = 0.85
+    similarity_threshold: float = 0.80
     inventory_path: str = "data/canonical_inventory"
     embedding_dim: int = 384
     faiss_nprobe: int = 16
@@ -59,9 +59,16 @@ class PromptFuseConfig(BaseModel):
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="PROMPTFUSE_", extra="ignore")
+
     config_path: Path = Path("configs/default.yaml")
 
     def load(self) -> PromptFuseConfig:
-        if self.config_path.exists():
-            return PromptFuseConfig.from_yaml(self.config_path)
+        import os
+
+        path = self.config_path
+        if env_config := os.environ.get("PROMPTFUSE_CONFIG"):
+            path = Path(env_config)
+        if path.exists():
+            return PromptFuseConfig.from_yaml(path)
         return PromptFuseConfig()

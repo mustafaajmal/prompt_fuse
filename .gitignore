@@ -13,8 +13,11 @@ venv/
 # Models and data artifacts
 models/
 data/canonical_inventory/
+data/demo_canonical_inventory/
 data/*.json
 !data/sample_prompts.txt
+!data/demo_workload.json
+!data/synthetic_paraphrases.json
 logs/
 results/
 

@@ -66,6 +66,16 @@ Update `configs/default.yaml` with `unifier.fine_tuned_encoder: models/finetuned
 promptfuse-benchmark --prompts data/sample_prompts.txt --compare-baselines
 ```
 
+### In-class demo (see [DEMO.md](DEMO.md))
+
+```bash
+# Full experiment (vLLM + PromptFuse running)
+promptfuse-demo --config configs/demo.yaml
+
+# Live paraphrase demo
+./scripts/demo_live.sh
+```
+
 ### Serve middleware
 
 Start vLLM first:

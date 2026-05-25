@@ -48,6 +48,7 @@ llmlingua = [
 [project.scripts]
 promptfuse-serve = "promptfuse.middleware.server:main"
 promptfuse-benchmark = "promptfuse.evaluation.benchmark:main"
+promptfuse-demo = "promptfuse.evaluation.demo_runner:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

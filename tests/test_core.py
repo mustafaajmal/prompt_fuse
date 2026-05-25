@@ -66,14 +66,14 @@ class TestMetrics:
 
 class TestSemanticUnifier:
     @pytest.fixture()
-    def unifier(self):
+    def unifier(self, tmp_path):
         from promptfuse.unifier.semantic_unifier import SemanticUnifier
         from promptfuse.config import UnifierConfig
 
-        # Base MiniLM reaches ~0.81 on paraphrase pairs; fine-tuned model uses 0.85
         config = UnifierConfig(
             encoder_model="sentence-transformers/all-MiniLM-L6-v2",
             similarity_threshold=0.80,
+            inventory_path=str(tmp_path / "test_inventory"),
         )
         return SemanticUnifier(config, lazy_load=False)
 

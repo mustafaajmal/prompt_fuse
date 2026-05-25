@@ -121,8 +121,12 @@ class PromptFuseServer:
             logger.error("vLLM request failed: %s", exc)
             raise HTTPException(status_code=502, detail=f"vLLM backend error: {exc}") from exc
 
-        ttft_ms = (time.perf_counter() - t0) * 1000
-        result.setdefault("_promptfuse", {})["vllm_latency_ms"] = ttft_ms
+        vllm_ms = (time.perf_counter() - t0) * 1000
+        usage = result.get("usage", {})
+        pf_meta = result.setdefault("_promptfuse", {})
+        pf_meta["vllm_latency_ms"] = vllm_ms
+        pf_meta["vllm_prompt_tokens"] = usage.get("prompt_tokens")
+        pf_meta["vllm_completion_tokens"] = usage.get("completion_tokens")
         return result
 
     def _log_event(self, endpoint: str, processed: Any, request_meta: dict) -> None:
@@ -141,6 +145,13 @@ class PromptFuseServer:
             "total_ms": processed.total_ms,
             "original_tokens": processed.compression.original_tokens if processed.compression else None,
             "final_tokens": processed.compression.compressed_tokens if processed.compression else None,
+            "final_prompt": processed.final_prompt[:500],
+            "unifier_similarity": (
+                processed.unification.similarity if processed.unification else None
+            ),
+            "canonical_id": (
+                processed.unification.canonical_id if processed.unification else None
+            ),
         }
         with open(self.log_path, "a") as f:
             f.write(json.dumps(event) + "\n")
@@ -162,7 +173,7 @@ def create_app(config_path: str | None = None) -> FastAPI:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    server = PromptFuseServer()
+    server = PromptFuseServer(Settings().load())
     server.run()
 
 
