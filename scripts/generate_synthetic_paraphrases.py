@@ -137,6 +137,28 @@ _REWRITE_PATTERNS = [
     "{text} Limit the response to key points.",
 ]
 
+_CONTEXT_SNIPPETS = [
+    "The team is preparing a weekly update for leadership and needs a concise, accurate response.",
+    "The input may contain noisy details, but the final answer should focus on the main objective only.",
+    "Assume this output will be consumed by a downstream automation step that is sensitive to formatting.",
+    "The requester is under time pressure and prefers direct, actionable language over long explanations.",
+    "The content may include domain-specific terminology; preserve meaning even when simplifying.",
+]
+
+_CONSTRAINT_SNIPPETS = [
+    "Return the final answer only.",
+    "Do not include preamble or extra commentary.",
+    "Follow the requested format exactly.",
+    "Keep the output concise and unambiguous.",
+    "Preserve key entities and numeric values where present.",
+]
+
+_WRAPPER_PATTERNS = [
+    "Context: {context}\nInstruction: {text}\nConstraints:\n- {c1}\n- {c2}",
+    "You are an assistant helping with a production workflow.\nTask: {text}\nRequirements:\n1. {c1}\n2. {c2}\nBackground: {context}",
+    "System note: prioritize precision over verbosity.\nUser request: {text}\nAdditional notes: {context}\nOutput rules: {c1} {c2}",
+]
+
 
 def _normalize_sentence(text: str) -> str:
     text = re.sub(r"\s+", " ", text.strip())
@@ -177,6 +199,20 @@ def _expand_cluster_variants(base_variants: list[str], target_variants: int) -> 
             text_lc=_lowercase_first_alpha(source.rstrip(".!?")),
         )
         add(rewritten)
+
+        if len(unique) < target_variants:
+            wrapper = _WRAPPER_PATTERNS[pattern_idx % len(_WRAPPER_PATTERNS)]
+            context = _CONTEXT_SNIPPETS[pattern_idx % len(_CONTEXT_SNIPPETS)]
+            c1 = _CONSTRAINT_SNIPPETS[pattern_idx % len(_CONSTRAINT_SNIPPETS)]
+            c2 = _CONSTRAINT_SNIPPETS[(pattern_idx + 1) % len(_CONSTRAINT_SNIPPETS)]
+            enriched = wrapper.format(
+                text=source.rstrip(".!?"),
+                context=context,
+                c1=c1,
+                c2=c2,
+            )
+            add(enriched)
+
         pattern_idx += 1
         source_idx += 1
 
