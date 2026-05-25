@@ -5,6 +5,7 @@ compressor:
   compression_ratio: 0.40  # target token reduction (0.25, 0.40, 0.55)
   device: "auto"
   max_length: 1024  # GPT-2 context window; raise when using Llama-3.2-1B
+  batch_size: 8  # lower (e.g. 4) on MPS if perplexity batches OOM
   preserve_patterns:  # keep critical instructions even at higher compression ratios
     - "\\bmust\\b"
     - "\\bexactly\\b"

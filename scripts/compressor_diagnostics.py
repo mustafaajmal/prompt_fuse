@@ -63,9 +63,8 @@ def main() -> None:
         if not segments:
             continue
 
-        token_counts = [compressor.count_tokens(seg) for seg in segments]
-        perplexities = compressor._segment_perplexities(segments)
-        protected = [compressor._is_protected_segment(seg) for seg in segments]
+        scores, _ = compressor._score_segments(segments)
+        protected = [compressor._is_protected(seg) for seg in segments]
 
         result = compressor.compress(prompt, compression_ratio=args.ratio)
         kept_segments = split_sentences(result.compressed)
@@ -82,8 +81,8 @@ def main() -> None:
                 SegmentDiagnostic(
                     index=idx,
                     text_preview=segment[:120],
-                    token_count=token_counts[idx],
-                    perplexity=perplexities[idx],
+                    token_count=scores[idx].token_count,
+                    perplexity=scores[idx].perplexity,
                     protected=protected[idx],
                     kept=currently_kept,
                 )

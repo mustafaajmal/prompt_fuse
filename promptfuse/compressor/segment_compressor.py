@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import torch
@@ -16,11 +16,18 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+# Join kept segments the same way for budgeting and final text.
+SEGMENT_JOIN = " "
 
+
+# ---------------------------------------------------------------------------
+# Result dataclass
+# ---------------------------------------------------------------------------
 
 @dataclass
 class CompressionResult:
+    """Outcome of a single compression pass."""
+
     original: str
     compressed: str
     original_tokens: int
@@ -29,6 +36,8 @@ class CompressionResult:
     segments_total: int
     target_tokens: int = 0
     protected_segments_kept: int = 0
+    dropped_segments: list[str] = field(default_factory=list)
+    truncated_segments: list[int] = field(default_factory=list)
 
     @property
     def token_reduction(self) -> float:
@@ -37,37 +46,130 @@ class CompressionResult:
         return 1.0 - (self.compressed_tokens / self.original_tokens)
 
 
-def split_sentences(text: str) -> list[str]:
-    """Split text into sentence-level segments."""
+@dataclass
+class _SegmentScore:
+    """Internal bookkeeping for a single segment during scoring."""
+
+    index: int
+    text: str
+    token_count: int = 0
+    perplexity: float = float("inf")
+
+
+# ---------------------------------------------------------------------------
+# Sentence splitting
+# ---------------------------------------------------------------------------
+
+_PARAGRAPH_RE = re.compile(r"\n\s*\n")
+# Fallback when NLTK is unavailable: split after sentence-ending punctuation.
+_SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _nltk_punkt_tokenize(text: str) -> list[str] | None:
+    """Tokenize with NLTK punkt_tab if available."""
     try:
         import nltk
 
         try:
-            nltk.data.find("tokenizers/punkt")
+            nltk.data.find("tokenizers/punkt_tab")
         except LookupError:
-            nltk.download("punkt", quiet=True)
-        return nltk.sent_tokenize(text)
+            nltk.download("punkt_tab", quiet=True)
+        tokenizer = nltk.data.load("tokenizers/punkt_tab/english.pickle")
+        return tokenizer.tokenize(text)  # type: ignore[no-any-return]
     except Exception:
-        parts = _SENTENCE_RE.split(text.strip())
+        return None
+
+
+def _nltk_sent_tokenize(text: str) -> list[str] | None:
+    """Tokenize with NLTK sent_tokenize if available."""
+    try:
+        import nltk
+
+        try:
+            nltk.data.find("tokenizers/punkt_tab")
+        except LookupError:
+            nltk.download("punkt_tab", quiet=True)
+        from nltk.tokenize import sent_tokenize
+
+        return [s.strip() for s in sent_tokenize(text) if s.strip()]
+    except Exception:
+        return None
+
+
+def _regex_sentence_split(text: str) -> list[str]:
+    """Conservative regex split on [.!?] boundaries."""
+    parts = _SENTENCE_BOUNDARY_RE.split(text.strip())
+    return [p.strip() for p in parts if p.strip()]
+
+
+_CACHED_USE_PUNKT: bool | None = None
+
+
+def split_sentences(text: str) -> list[str]:
+    """Split text into sentence-level segments.
+
+    Tries, in order: NLTK punkt_tab, NLTK sent_tokenize, regex sentence
+    boundaries, then paragraph boundaries. Single-paragraph multi-sentence
+    prompts still split when NLTK or regex applies.
+    """
+    global _CACHED_USE_PUNKT
+
+    stripped = text.strip()
+    if not stripped:
+        return []
+
+    if _CACHED_USE_PUNKT is not False:
+        sentences = _nltk_punkt_tokenize(stripped)
+        if sentences and len(sentences) > 1:
+            return sentences
+        if sentences and len(sentences) == 1:
+            # Punkt returned one span; try sent_tokenize / regex before giving up.
+            pass
+        elif sentences is None and _CACHED_USE_PUNKT is None:
+            _CACHED_USE_PUNKT = False
+
+    sentences = _nltk_sent_tokenize(stripped)
+    if sentences and len(sentences) > 1:
+        return sentences
+
+    regex_parts = _regex_sentence_split(stripped)
+    if len(regex_parts) > 1:
+        return regex_parts
+
+    parts = _PARAGRAPH_RE.split(stripped)
+    if len(parts) > 1:
         return [p.strip() for p in parts if p.strip()]
 
+    return [stripped]
+
+
+# ---------------------------------------------------------------------------
+# Compressor
+# ---------------------------------------------------------------------------
 
 class SegmentCompressor:
-    """
-    Sentence-segment-level compressor inspired by LLMLingua.
+    """Sentence-segment-level compressor inspired by LLMLingua.
 
-    Scores each sentence segment by average token perplexity under a small proxy LM,
-    then drops lowest-importance segments until the target compression ratio is met.
+    Scores each sentence segment by average token perplexity under a small
+    proxy LM, then drops lowest-importance segments until the target
+    compression ratio is met.
     """
 
-    def __init__(self, config: CompressorConfig | None = None, *, lazy_load: bool = False):
+    def __init__(
+        self,
+        config: CompressorConfig | None = None,
+        *,
+        lazy_load: bool = False,
+    ) -> None:
         from promptfuse.config import CompressorConfig as _CompressorConfig
 
         self.config = config or _CompressorConfig()
-        self._tokenizer = None
-        self._model = None
+        self._tokenizer: AutoTokenizer | None = None
+        self._model: AutoModelForCausalLM | None = None
         self._device: torch.device | None = None
-        self._protected_res = [re.compile(pat, re.IGNORECASE) for pat in self.config.preserve_patterns]
+        self._protected_res: list[re.Pattern[str]] = [
+            re.compile(pat, re.IGNORECASE) for pat in self.config.preserve_patterns
+        ]
 
         if not lazy_load:
             self._load_model()
@@ -82,85 +184,132 @@ class SegmentCompressor:
         return torch.device(self.config.device)
 
     def _load_model(self) -> None:
+        """Idempotent model loader with atomic success guarantee."""
         if self._model is not None:
             return
-        self._device = self._resolve_device()
-        logger.info("Loading proxy LM %s on %s", self.config.proxy_model, self._device)
-        self._tokenizer = AutoTokenizer.from_pretrained(self.config.proxy_model)
-        if self._tokenizer.pad_token is None:
-            self._tokenizer.pad_token = self._tokenizer.eos_token
-        self._model = AutoModelForCausalLM.from_pretrained(
-            self.config.proxy_model,
-            torch_dtype=torch.float16 if self._device.type == "cuda" else torch.float32,
-        )
-        self._model.to(self._device)
-        self._model.eval()
 
-    def count_tokens(self, text: str) -> int:
+        device = self._resolve_device()
+        logger.info("Loading proxy LM %s on %s", self.config.proxy_model, device)
+
+        tokenizer = AutoTokenizer.from_pretrained(self.config.proxy_model)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        model = AutoModelForCausalLM.from_pretrained(
+            self.config.proxy_model,
+            torch_dtype=torch.float16 if device.type == "cuda" else torch.float32,
+        )
+        model.to(device)
+        model.eval()
+
+        self._tokenizer = tokenizer
+        self._model = model
+        self._device = device
+
+    def _ensure_loaded(self) -> tuple[AutoTokenizer, AutoModelForCausalLM, torch.device]:
         self._load_model()
         assert self._tokenizer is not None
-        return len(self._tokenizer.encode(text, add_special_tokens=False))
+        assert self._model is not None
+        assert self._device is not None
+        return self._tokenizer, self._model, self._device
 
-    def _segment_perplexities(self, segments: list[str]) -> list[float]:
-        """
-        Compute perplexity for all segments in one batched forward pass.
+    def count_tokens(self, text: str) -> int:
+        tokenizer, _, _ = self._ensure_loaded()
+        return len(tokenizer.encode(text, add_special_tokens=False))
 
-        Lower perplexity => lower importance (more redundant under the proxy LM).
-        """
-        self._load_model()
-        assert self._tokenizer is not None and self._model is not None and self._device is not None
+    def _score_segments(
+        self,
+        segments: list[str],
+    ) -> tuple[list[_SegmentScore], list[int]]:
+        """Score segments; return (scores, indices truncated at max_length)."""
+        tokenizer, model, device = self._ensure_loaded()
+
         if not segments:
-            return []
+            return [], []
 
-        inputs = self._tokenizer(
-            segments,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=self.config.max_length,
-        )
-        input_ids = inputs["input_ids"].to(self._device)
-        attention_mask = inputs["attention_mask"].to(self._device)
-        if input_ids.shape[1] < 2:
-            return [float("inf")] * len(segments)
+        encodings = [
+            tokenizer.encode(seg, add_special_tokens=False, truncation=False)
+            for seg in segments
+        ]
 
-        labels = input_ids.clone()
-        labels[attention_mask == 0] = -100
+        infos: list[_SegmentScore] = []
+        truncated_indices: list[int] = []
 
-        with torch.no_grad():
-            outputs = self._model(input_ids=input_ids, attention_mask=attention_mask)
-            logits = outputs.logits[:, :-1, :]
-            shift_labels = labels[:, 1:]
+        for idx, (seg, enc) in enumerate(zip(segments, encodings)):
+            tok_count = len(enc)
+            if tok_count > self.config.max_length:
+                truncated_indices.append(idx)
+                tok_count = self.config.max_length
+            infos.append(_SegmentScore(index=idx, text=seg, token_count=tok_count))
 
-            token_loss = F.cross_entropy(
-                logits.reshape(-1, logits.shape[-1]),
-                shift_labels.reshape(-1),
-                reduction="none",
-                ignore_index=-100,
-            ).reshape(shift_labels.shape[0], shift_labels.shape[1])
-            valid = shift_labels != -100
-            valid_counts = valid.sum(dim=1)
-            summed_loss = (token_loss * valid).sum(dim=1)
+        if truncated_indices:
+            logger.warning(
+                "Segments at indices %s exceed max_length (%d) and will be "
+                "truncated; their perplexity scores may be inaccurate.",
+                truncated_indices,
+                self.config.max_length,
+            )
 
-            per_segment_loss = torch.full_like(summed_loss, fill_value=float("inf"), dtype=torch.float32)
-            non_empty = valid_counts > 0
-            per_segment_loss[non_empty] = summed_loss[non_empty] / valid_counts[non_empty]
-            per_segment_ppl = torch.exp(per_segment_loss)
+        order = sorted(range(len(infos)), key=lambda i: infos[i].token_count)
+        batch_size = self.config.batch_size
 
-        return [float(x.item()) for x in per_segment_ppl]
+        for start in range(0, len(order), batch_size):
+            batch_indices = order[start : start + batch_size]
+            batch_texts = [infos[i].text for i in batch_indices]
 
-    def _is_protected_segment(self, segment: str) -> bool:
-        """Keep critical instruction-like segments even under aggressive compression."""
-        return any(pattern.search(segment) for pattern in self._protected_res)
+            inputs = tokenizer(
+                batch_texts,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=self.config.max_length,
+            )
+            input_ids = inputs["input_ids"].to(device)
+            attention_mask = inputs["attention_mask"].to(device)
 
-    def compress(self, prompt: str, compression_ratio: float | None = None) -> CompressionResult:
-        """
-        Compress prompt by dropping low-importance sentence segments.
+            if input_ids.shape[1] < 2:
+                for bi in batch_indices:
+                    infos[bi].perplexity = float("inf")
+                continue
 
-        Args:
-            prompt: Raw input prompt.
-            compression_ratio: Target fraction of tokens to remove (0.25 = 25% reduction).
-        """
+            labels = input_ids.clone()
+            labels[attention_mask == 0] = -100
+
+            with torch.no_grad():
+                logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
+                shift_logits = logits[:, :-1, :]
+                shift_labels = labels[:, 1:]
+
+                token_loss = F.cross_entropy(
+                    shift_logits.reshape(-1, shift_logits.shape[-1]),
+                    shift_labels.reshape(-1),
+                    reduction="none",
+                    ignore_index=-100,
+                ).reshape(shift_labels.shape)
+
+                valid_mask = shift_labels != -100
+                valid_counts = valid_mask.sum(dim=1).float()
+                summed_loss = (token_loss * valid_mask).sum(dim=1)
+
+                ppl = torch.where(
+                    valid_counts > 0,
+                    torch.exp(summed_loss / valid_counts),
+                    torch.tensor(float("inf"), device=device),
+                )
+
+            for j, bi in enumerate(batch_indices):
+                infos[bi].perplexity = ppl[j].item()
+
+        return infos, truncated_indices
+
+    def _is_protected(self, segment: str) -> bool:
+        return any(pat.search(segment) for pat in self._protected_res)
+
+    def compress(
+        self,
+        prompt: str,
+        compression_ratio: float | None = None,
+    ) -> CompressionResult:
         ratio = compression_ratio if compression_ratio is not None else self.config.compression_ratio
         ratio = max(0.0, min(ratio, 0.90))
 
@@ -175,53 +324,57 @@ class SegmentCompressor:
                 segments_kept=0,
                 segments_total=0,
                 target_tokens=tokens,
-                protected_segments_kept=0,
             )
 
-        token_cache: dict[str, int] = {}
+        infos, truncated_indices = self._score_segments(segments)
 
-        def token_count(text: str) -> int:
-            if text not in token_cache:
-                token_cache[text] = self.count_tokens(text)
-            return token_cache[text]
-
-        original_tokens = token_count(prompt)
+        # Budget from per-segment token counts (same tokenizer, no join boundary skew).
+        original_tokens = sum(info.token_count for info in infos)
+        if original_tokens == 0:
+            original_tokens = 1
         target_tokens = max(1, int(original_tokens * (1.0 - ratio)))
 
-        segment_tokens = [token_count(seg) for seg in segments]
-        segment_ppl = self._segment_perplexities(segments)
+        protected_idx: list[int] = []
+        unprotected_idx: list[int] = []
+        for info in infos:
+            if self._is_protected(info.text):
+                protected_idx.append(info.index)
+            else:
+                unprotected_idx.append(info.index)
 
-        protected_indices = [idx for idx, seg in enumerate(segments) if self._is_protected_segment(seg)]
-        protected_set = set(protected_indices)
+        protected_tokens = sum(infos[i].token_count for i in protected_idx)
+        if protected_tokens > target_tokens:
+            logger.warning(
+                "Protected segments alone use %d tokens, exceeding the "
+                "target budget of %d tokens.  All protected segments will "
+                "be kept; effective compression will be lower than requested.",
+                protected_tokens,
+                target_tokens,
+            )
 
-        # Keep protected segments first, then high-perplexity (informative) segments until budget is met.
-        kept_indices: list[int] = list(protected_indices)
-        kept_index_set = set(kept_indices)
-        kept_tokens = sum(segment_tokens[idx] for idx in kept_indices)
+        remaining_budget = max(0, target_tokens - protected_tokens)
+        ranked = sorted(unprotected_idx, key=lambda i: infos[i].perplexity, reverse=True)
 
-        ranked_indices = sorted(
-            (idx for idx in range(len(segments)) if idx not in protected_set),
-            key=lambda idx: segment_ppl[idx],
-            reverse=True,
-        )
-        for idx in ranked_indices:
-            tok_count = segment_tokens[idx]
-            if kept_tokens + tok_count <= target_tokens or not kept_indices:
-                kept_indices.append(idx)
-                kept_index_set.add(idx)
-                kept_tokens += tok_count
-            if kept_tokens >= target_tokens:
+        kept_unprotected: list[int] = []
+        used = 0
+        for idx in ranked:
+            tok = infos[idx].token_count
+            if used + tok <= remaining_budget:
+                kept_unprotected.append(idx)
+                used += tok
+            if used >= remaining_budget and kept_unprotected:
                 break
 
-        if not kept_indices:
-            best_idx = max(range(len(segments)), key=lambda i: segment_ppl[i])
-            kept_indices = [best_idx]
-            kept_index_set = {best_idx}
+        kept_set = set(protected_idx) | set(kept_unprotected)
+        if not kept_set:
+            best = max(range(len(infos)), key=lambda i: infos[i].perplexity)
+            kept_set.add(best)
 
-        ordered = [seg for idx, seg in enumerate(segments) if idx in kept_index_set]
+        ordered = [segments[i] for i in sorted(kept_set)]
+        dropped = [segments[i] for i in range(len(segments)) if i not in kept_set]
 
-        compressed = " ".join(ordered)
-        compressed_tokens = token_count(compressed)
+        compressed = SEGMENT_JOIN.join(ordered)
+        compressed_tokens = self.count_tokens(compressed)
 
         return CompressionResult(
             original=prompt,
@@ -231,5 +384,7 @@ class SegmentCompressor:
             segments_kept=len(ordered),
             segments_total=len(segments),
             target_tokens=target_tokens,
-            protected_segments_kept=sum(1 for idx in kept_indices if idx in protected_set),
+            protected_segments_kept=len(protected_idx),
+            dropped_segments=dropped,
+            truncated_segments=truncated_indices,
         )

@@ -14,7 +14,8 @@ class CompressorConfig(BaseModel):
     proxy_model: str = "meta-llama/Llama-3.2-1B"
     compression_ratio: float = 0.40
     device: str = "auto"
-    max_length: int = 4096
+    max_length: int = 4096  # match proxy LM context (e.g. 1024 for GPT-2)
+    batch_size: int = 8  # perplexity scoring batch size (lower on MPS if OOM)
     preserve_patterns: list[str] = Field(
         default_factory=lambda: [
             r"\bmust\b",
