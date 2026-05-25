@@ -1,0 +1,1694 @@
+[
+  {
+    "id": 2,
+    "category": "summarization",
+    "cluster_id": 1,
+    "variant_id": 2,
+    "text": "Provide a brief 3-sentence summary of the following content.",
+    "is_canonical": false,
+    "canonical": "Summarize the following paragraph in three sentences."
+  },
+  {
+    "id": 64,
+    "category": "synthetic_20",
+    "cluster_id": 20,
+    "variant_id": 0,
+    "text": "Perform task type 20 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 20 on the input below."
+  },
+  {
+    "id": 12,
+    "category": "classification",
+    "cluster_id": 4,
+    "variant_id": 2,
+    "text": "Determine if the following message is spam.",
+    "is_canonical": false,
+    "canonical": "Is this email spam or not spam?"
+  },
+  {
+    "id": 183,
+    "category": "synthetic_49",
+    "cluster_id": 49,
+    "variant_id": 3,
+    "text": "Apply instruction type 49 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 49 on the input below."
+  },
+  {
+    "id": 115,
+    "category": "synthetic_32",
+    "cluster_id": 32,
+    "variant_id": 3,
+    "text": "Apply instruction type 32 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 32 on the input below."
+  },
+  {
+    "id": 36,
+    "category": "brainstorming",
+    "cluster_id": 12,
+    "variant_id": 2,
+    "text": "List ten possible ideas for the following subject.",
+    "is_canonical": false,
+    "canonical": "Brainstorm ten ideas for the topic below."
+  },
+  {
+    "id": 177,
+    "category": "synthetic_48",
+    "cluster_id": 48,
+    "variant_id": 1,
+    "text": "Execute task 48 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 48 on the input below."
+  },
+  {
+    "id": 184,
+    "category": "synthetic_50",
+    "cluster_id": 50,
+    "variant_id": 0,
+    "text": "Perform task type 50 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 50 on the input below."
+  },
+  {
+    "id": 73,
+    "category": "synthetic_22",
+    "cluster_id": 22,
+    "variant_id": 1,
+    "text": "Execute task 22 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 22 on the input below."
+  },
+  {
+    "id": 13,
+    "category": "translation",
+    "cluster_id": 5,
+    "variant_id": 0,
+    "text": "Translate the following text from English to French.",
+    "is_canonical": false,
+    "canonical": "Please translate this passage to French."
+  },
+  {
+    "id": 158,
+    "category": "synthetic_43",
+    "cluster_id": 43,
+    "variant_id": 2,
+    "text": "Complete task category 43 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 43 on the input below."
+  },
+  {
+    "id": 15,
+    "category": "translation",
+    "cluster_id": 5,
+    "variant_id": 2,
+    "text": "Please translate this passage to French.",
+    "is_canonical": true,
+    "canonical": "Please translate this passage to French."
+  },
+  {
+    "id": 153,
+    "category": "synthetic_42",
+    "cluster_id": 42,
+    "variant_id": 1,
+    "text": "Execute task 42 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 42 on the input below."
+  },
+  {
+    "id": 53,
+    "category": "synthetic_17",
+    "cluster_id": 17,
+    "variant_id": 1,
+    "text": "Execute task 17 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 17 on the input below."
+  },
+  {
+    "id": 128,
+    "category": "synthetic_36",
+    "cluster_id": 36,
+    "variant_id": 0,
+    "text": "Perform task type 36 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 36 on the input below."
+  },
+  {
+    "id": 44,
+    "category": "synthetic_15",
+    "cluster_id": 15,
+    "variant_id": 0,
+    "text": "Perform task type 15 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 15 on the input below."
+  },
+  {
+    "id": 149,
+    "category": "synthetic_41",
+    "cluster_id": 41,
+    "variant_id": 1,
+    "text": "Execute task 41 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 41 on the input below."
+  },
+  {
+    "id": 42,
+    "category": "synthetic_14",
+    "cluster_id": 14,
+    "variant_id": 2,
+    "text": "Complete task category 14 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 14 on the input below."
+  },
+  {
+    "id": 5,
+    "category": "summarization",
+    "cluster_id": 2,
+    "variant_id": 1,
+    "text": "Write a single-paragraph summary of the article below.",
+    "is_canonical": false,
+    "canonical": "Summarize this article in one paragraph."
+  },
+  {
+    "id": 111,
+    "category": "synthetic_31",
+    "cluster_id": 31,
+    "variant_id": 3,
+    "text": "Apply instruction type 31 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 31 on the input below."
+  },
+  {
+    "id": 162,
+    "category": "synthetic_44",
+    "cluster_id": 44,
+    "variant_id": 2,
+    "text": "Complete task category 44 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 44 on the input below."
+  },
+  {
+    "id": 141,
+    "category": "synthetic_39",
+    "cluster_id": 39,
+    "variant_id": 1,
+    "text": "Execute task 39 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 39 on the input below."
+  },
+  {
+    "id": 144,
+    "category": "synthetic_40",
+    "cluster_id": 40,
+    "variant_id": 0,
+    "text": "Perform task type 40 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 40 on the input below."
+  },
+  {
+    "id": 30,
+    "category": "rewriting",
+    "cluster_id": 10,
+    "variant_id": 2,
+    "text": "Rephrase this sentence in formal language.",
+    "is_canonical": true,
+    "canonical": "Rephrase this sentence in formal language."
+  },
+  {
+    "id": 118,
+    "category": "synthetic_33",
+    "cluster_id": 33,
+    "variant_id": 2,
+    "text": "Complete task category 33 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 33 on the input below."
+  },
+  {
+    "id": 112,
+    "category": "synthetic_32",
+    "cluster_id": 32,
+    "variant_id": 0,
+    "text": "Perform task type 32 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 32 on the input below."
+  },
+  {
+    "id": 105,
+    "category": "synthetic_30",
+    "cluster_id": 30,
+    "variant_id": 1,
+    "text": "Execute task 30 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 30 on the input below."
+  },
+  {
+    "id": 37,
+    "category": "comparison",
+    "cluster_id": 13,
+    "variant_id": 0,
+    "text": "Compare and contrast the two passages below.",
+    "is_canonical": true,
+    "canonical": "Compare and contrast the two passages below."
+  },
+  {
+    "id": 3,
+    "category": "summarization",
+    "cluster_id": 1,
+    "variant_id": 3,
+    "text": "Condense the paragraph below into exactly three sentences.",
+    "is_canonical": false,
+    "canonical": "Summarize the following paragraph in three sentences."
+  },
+  {
+    "id": 135,
+    "category": "synthetic_37",
+    "cluster_id": 37,
+    "variant_id": 3,
+    "text": "Apply instruction type 37 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 37 on the input below."
+  },
+  {
+    "id": 127,
+    "category": "synthetic_35",
+    "cluster_id": 35,
+    "variant_id": 3,
+    "text": "Apply instruction type 35 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 35 on the input below."
+  },
+  {
+    "id": 66,
+    "category": "synthetic_20",
+    "cluster_id": 20,
+    "variant_id": 2,
+    "text": "Complete task category 20 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 20 on the input below."
+  },
+  {
+    "id": 32,
+    "category": "reasoning",
+    "cluster_id": 11,
+    "variant_id": 1,
+    "text": "Work through this math problem showing each step.",
+    "is_canonical": true,
+    "canonical": "Work through this math problem showing each step."
+  },
+  {
+    "id": 60,
+    "category": "synthetic_19",
+    "cluster_id": 19,
+    "variant_id": 0,
+    "text": "Perform task type 19 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 19 on the input below."
+  },
+  {
+    "id": 103,
+    "category": "synthetic_29",
+    "cluster_id": 29,
+    "variant_id": 3,
+    "text": "Apply instruction type 29 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 29 on the input below."
+  },
+  {
+    "id": 52,
+    "category": "synthetic_17",
+    "cluster_id": 17,
+    "variant_id": 0,
+    "text": "Perform task type 17 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 17 on the input below."
+  },
+  {
+    "id": 61,
+    "category": "synthetic_19",
+    "cluster_id": 19,
+    "variant_id": 1,
+    "text": "Execute task 19 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 19 on the input below."
+  },
+  {
+    "id": 101,
+    "category": "synthetic_29",
+    "cluster_id": 29,
+    "variant_id": 1,
+    "text": "Execute task 29 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 29 on the input below."
+  },
+  {
+    "id": 80,
+    "category": "synthetic_24",
+    "cluster_id": 24,
+    "variant_id": 0,
+    "text": "Perform task type 24 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 24 on the input below."
+  },
+  {
+    "id": 119,
+    "category": "synthetic_33",
+    "cluster_id": 33,
+    "variant_id": 3,
+    "text": "Apply instruction type 33 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 33 on the input below."
+  },
+  {
+    "id": 109,
+    "category": "synthetic_31",
+    "cluster_id": 31,
+    "variant_id": 1,
+    "text": "Execute task 31 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 31 on the input below."
+  },
+  {
+    "id": 164,
+    "category": "synthetic_45",
+    "cluster_id": 45,
+    "variant_id": 0,
+    "text": "Perform task type 45 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 45 on the input below."
+  },
+  {
+    "id": 69,
+    "category": "synthetic_21",
+    "cluster_id": 21,
+    "variant_id": 1,
+    "text": "Execute task 21 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 21 on the input below."
+  },
+  {
+    "id": 90,
+    "category": "synthetic_26",
+    "cluster_id": 26,
+    "variant_id": 2,
+    "text": "Complete task category 26 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 26 on the input below."
+  },
+  {
+    "id": 120,
+    "category": "synthetic_34",
+    "cluster_id": 34,
+    "variant_id": 0,
+    "text": "Perform task type 34 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 34 on the input below."
+  },
+  {
+    "id": 95,
+    "category": "synthetic_27",
+    "cluster_id": 27,
+    "variant_id": 3,
+    "text": "Apply instruction type 27 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 27 on the input below."
+  },
+  {
+    "id": 76,
+    "category": "synthetic_23",
+    "cluster_id": 23,
+    "variant_id": 0,
+    "text": "Perform task type 23 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 23 on the input below."
+  },
+  {
+    "id": 104,
+    "category": "synthetic_30",
+    "cluster_id": 30,
+    "variant_id": 0,
+    "text": "Perform task type 30 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 30 on the input below."
+  },
+  {
+    "id": 0,
+    "category": "summarization",
+    "cluster_id": 1,
+    "variant_id": 0,
+    "text": "Summarize the following paragraph in three sentences.",
+    "is_canonical": true,
+    "canonical": "Summarize the following paragraph in three sentences."
+  },
+  {
+    "id": 126,
+    "category": "synthetic_35",
+    "cluster_id": 35,
+    "variant_id": 2,
+    "text": "Complete task category 35 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 35 on the input below."
+  },
+  {
+    "id": 16,
+    "category": "translation",
+    "cluster_id": 6,
+    "variant_id": 0,
+    "text": "Translate the following sentence to Spanish.",
+    "is_canonical": false,
+    "canonical": "Render the sentence below in Spanish."
+  },
+  {
+    "id": 131,
+    "category": "synthetic_36",
+    "cluster_id": 36,
+    "variant_id": 3,
+    "text": "Apply instruction type 36 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 36 on the input below."
+  },
+  {
+    "id": 94,
+    "category": "synthetic_27",
+    "cluster_id": 27,
+    "variant_id": 2,
+    "text": "Complete task category 27 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 27 on the input below."
+  },
+  {
+    "id": 182,
+    "category": "synthetic_49",
+    "cluster_id": 49,
+    "variant_id": 2,
+    "text": "Complete task category 49 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 49 on the input below."
+  },
+  {
+    "id": 152,
+    "category": "synthetic_42",
+    "cluster_id": 42,
+    "variant_id": 0,
+    "text": "Perform task type 42 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 42 on the input below."
+  },
+  {
+    "id": 147,
+    "category": "synthetic_40",
+    "cluster_id": 40,
+    "variant_id": 3,
+    "text": "Apply instruction type 40 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 40 on the input below."
+  },
+  {
+    "id": 187,
+    "category": "synthetic_50",
+    "cluster_id": 50,
+    "variant_id": 3,
+    "text": "Apply instruction type 50 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 50 on the input below."
+  },
+  {
+    "id": 38,
+    "category": "comparison",
+    "cluster_id": 13,
+    "variant_id": 1,
+    "text": "Discuss similarities and differences between these two texts.",
+    "is_canonical": false,
+    "canonical": "Compare and contrast the two passages below."
+  },
+  {
+    "id": 142,
+    "category": "synthetic_39",
+    "cluster_id": 39,
+    "variant_id": 2,
+    "text": "Complete task category 39 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 39 on the input below."
+  },
+  {
+    "id": 43,
+    "category": "synthetic_14",
+    "cluster_id": 14,
+    "variant_id": 3,
+    "text": "Apply instruction type 14 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 14 on the input below."
+  },
+  {
+    "id": 113,
+    "category": "synthetic_32",
+    "cluster_id": 32,
+    "variant_id": 1,
+    "text": "Execute task 32 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 32 on the input below."
+  },
+  {
+    "id": 10,
+    "category": "classification",
+    "cluster_id": 4,
+    "variant_id": 0,
+    "text": "Is this email spam or not spam?",
+    "is_canonical": true,
+    "canonical": "Is this email spam or not spam?"
+  },
+  {
+    "id": 176,
+    "category": "synthetic_48",
+    "cluster_id": 48,
+    "variant_id": 0,
+    "text": "Perform task type 48 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 48 on the input below."
+  },
+  {
+    "id": 19,
+    "category": "question_answering",
+    "cluster_id": 7,
+    "variant_id": 0,
+    "text": "Answer the question based on the context provided.",
+    "is_canonical": false,
+    "canonical": "Using the context below, answer the question."
+  },
+  {
+    "id": 14,
+    "category": "translation",
+    "cluster_id": 5,
+    "variant_id": 1,
+    "text": "Convert the English text below into French.",
+    "is_canonical": false,
+    "canonical": "Please translate this passage to French."
+  },
+  {
+    "id": 167,
+    "category": "synthetic_45",
+    "cluster_id": 45,
+    "variant_id": 3,
+    "text": "Apply instruction type 45 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 45 on the input below."
+  },
+  {
+    "id": 133,
+    "category": "synthetic_37",
+    "cluster_id": 37,
+    "variant_id": 1,
+    "text": "Execute task 37 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 37 on the input below."
+  },
+  {
+    "id": 84,
+    "category": "synthetic_25",
+    "cluster_id": 25,
+    "variant_id": 0,
+    "text": "Perform task type 25 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 25 on the input below."
+  },
+  {
+    "id": 65,
+    "category": "synthetic_20",
+    "cluster_id": 20,
+    "variant_id": 1,
+    "text": "Execute task 20 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 20 on the input below."
+  },
+  {
+    "id": 78,
+    "category": "synthetic_23",
+    "cluster_id": 23,
+    "variant_id": 2,
+    "text": "Complete task category 23 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 23 on the input below."
+  },
+  {
+    "id": 98,
+    "category": "synthetic_28",
+    "cluster_id": 28,
+    "variant_id": 2,
+    "text": "Complete task category 28 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 28 on the input below."
+  },
+  {
+    "id": 122,
+    "category": "synthetic_34",
+    "cluster_id": 34,
+    "variant_id": 2,
+    "text": "Complete task category 34 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 34 on the input below."
+  },
+  {
+    "id": 146,
+    "category": "synthetic_40",
+    "cluster_id": 40,
+    "variant_id": 2,
+    "text": "Complete task category 40 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 40 on the input below."
+  },
+  {
+    "id": 54,
+    "category": "synthetic_17",
+    "cluster_id": 17,
+    "variant_id": 2,
+    "text": "Complete task category 17 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 17 on the input below."
+  },
+  {
+    "id": 79,
+    "category": "synthetic_23",
+    "cluster_id": 23,
+    "variant_id": 3,
+    "text": "Apply instruction type 23 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 23 on the input below."
+  },
+  {
+    "id": 156,
+    "category": "synthetic_43",
+    "cluster_id": 43,
+    "variant_id": 0,
+    "text": "Perform task type 43 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 43 on the input below."
+  },
+  {
+    "id": 99,
+    "category": "synthetic_28",
+    "cluster_id": 28,
+    "variant_id": 3,
+    "text": "Apply instruction type 28 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 28 on the input below."
+  },
+  {
+    "id": 123,
+    "category": "synthetic_34",
+    "cluster_id": 34,
+    "variant_id": 3,
+    "text": "Apply instruction type 34 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 34 on the input below."
+  },
+  {
+    "id": 134,
+    "category": "synthetic_37",
+    "cluster_id": 37,
+    "variant_id": 2,
+    "text": "Complete task category 37 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 37 on the input below."
+  },
+  {
+    "id": 33,
+    "category": "reasoning",
+    "cluster_id": 11,
+    "variant_id": 2,
+    "text": "Provide a step-by-step solution to the problem below.",
+    "is_canonical": false,
+    "canonical": "Work through this math problem showing each step."
+  },
+  {
+    "id": 18,
+    "category": "translation",
+    "cluster_id": 6,
+    "variant_id": 2,
+    "text": "Provide a Spanish translation of the following.",
+    "is_canonical": false,
+    "canonical": "Render the sentence below in Spanish."
+  },
+  {
+    "id": 125,
+    "category": "synthetic_35",
+    "cluster_id": 35,
+    "variant_id": 1,
+    "text": "Execute task 35 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 35 on the input below."
+  },
+  {
+    "id": 165,
+    "category": "synthetic_45",
+    "cluster_id": 45,
+    "variant_id": 1,
+    "text": "Execute task 45 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 45 on the input below."
+  },
+  {
+    "id": 63,
+    "category": "synthetic_19",
+    "cluster_id": 19,
+    "variant_id": 3,
+    "text": "Apply instruction type 19 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 19 on the input below."
+  },
+  {
+    "id": 83,
+    "category": "synthetic_24",
+    "cluster_id": 24,
+    "variant_id": 3,
+    "text": "Apply instruction type 24 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 24 on the input below."
+  },
+  {
+    "id": 100,
+    "category": "synthetic_29",
+    "cluster_id": 29,
+    "variant_id": 0,
+    "text": "Perform task type 29 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 29 on the input below."
+  },
+  {
+    "id": 136,
+    "category": "synthetic_38",
+    "cluster_id": 38,
+    "variant_id": 0,
+    "text": "Perform task type 38 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 38 on the input below."
+  },
+  {
+    "id": 72,
+    "category": "synthetic_22",
+    "cluster_id": 22,
+    "variant_id": 0,
+    "text": "Perform task type 22 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 22 on the input below."
+  },
+  {
+    "id": 27,
+    "category": "extraction",
+    "cluster_id": 9,
+    "variant_id": 2,
+    "text": "List the named entities found in this text.",
+    "is_canonical": true,
+    "canonical": "List the named entities found in this text."
+  },
+  {
+    "id": 174,
+    "category": "synthetic_47",
+    "cluster_id": 47,
+    "variant_id": 2,
+    "text": "Complete task category 47 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 47 on the input below."
+  },
+  {
+    "id": 102,
+    "category": "synthetic_29",
+    "cluster_id": 29,
+    "variant_id": 2,
+    "text": "Complete task category 29 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 29 on the input below."
+  },
+  {
+    "id": 51,
+    "category": "synthetic_16",
+    "cluster_id": 16,
+    "variant_id": 3,
+    "text": "Apply instruction type 16 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 16 on the input below."
+  },
+  {
+    "id": 157,
+    "category": "synthetic_43",
+    "cluster_id": 43,
+    "variant_id": 1,
+    "text": "Execute task 43 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 43 on the input below."
+  },
+  {
+    "id": 4,
+    "category": "summarization",
+    "cluster_id": 2,
+    "variant_id": 0,
+    "text": "Summarize this article in one paragraph.",
+    "is_canonical": true,
+    "canonical": "Summarize this article in one paragraph."
+  },
+  {
+    "id": 29,
+    "category": "rewriting",
+    "cluster_id": 10,
+    "variant_id": 1,
+    "text": "Make the sentence below more formal in tone.",
+    "is_canonical": false,
+    "canonical": "Rephrase this sentence in formal language."
+  },
+  {
+    "id": 179,
+    "category": "synthetic_48",
+    "cluster_id": 48,
+    "variant_id": 3,
+    "text": "Apply instruction type 48 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 48 on the input below."
+  },
+  {
+    "id": 41,
+    "category": "synthetic_14",
+    "cluster_id": 14,
+    "variant_id": 1,
+    "text": "Execute task 14 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 14 on the input below."
+  },
+  {
+    "id": 161,
+    "category": "synthetic_44",
+    "cluster_id": 44,
+    "variant_id": 1,
+    "text": "Execute task 44 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 44 on the input below."
+  },
+  {
+    "id": 186,
+    "category": "synthetic_50",
+    "cluster_id": 50,
+    "variant_id": 2,
+    "text": "Complete task category 50 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 50 on the input below."
+  },
+  {
+    "id": 168,
+    "category": "synthetic_46",
+    "cluster_id": 46,
+    "variant_id": 0,
+    "text": "Perform task type 46 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 46 on the input below."
+  },
+  {
+    "id": 145,
+    "category": "synthetic_40",
+    "cluster_id": 40,
+    "variant_id": 1,
+    "text": "Execute task 40 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 40 on the input below."
+  },
+  {
+    "id": 110,
+    "category": "synthetic_31",
+    "cluster_id": 31,
+    "variant_id": 2,
+    "text": "Complete task category 31 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 31 on the input below."
+  },
+  {
+    "id": 116,
+    "category": "synthetic_33",
+    "cluster_id": 33,
+    "variant_id": 0,
+    "text": "Perform task type 33 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 33 on the input below."
+  },
+  {
+    "id": 48,
+    "category": "synthetic_16",
+    "cluster_id": 16,
+    "variant_id": 0,
+    "text": "Perform task type 16 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 16 on the input below."
+  },
+  {
+    "id": 169,
+    "category": "synthetic_46",
+    "cluster_id": 46,
+    "variant_id": 1,
+    "text": "Execute task 46 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 46 on the input below."
+  },
+  {
+    "id": 121,
+    "category": "synthetic_34",
+    "cluster_id": 34,
+    "variant_id": 1,
+    "text": "Execute task 34 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 34 on the input below."
+  },
+  {
+    "id": 140,
+    "category": "synthetic_39",
+    "cluster_id": 39,
+    "variant_id": 0,
+    "text": "Perform task type 39 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 39 on the input below."
+  },
+  {
+    "id": 93,
+    "category": "synthetic_27",
+    "cluster_id": 27,
+    "variant_id": 1,
+    "text": "Execute task 27 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 27 on the input below."
+  },
+  {
+    "id": 68,
+    "category": "synthetic_21",
+    "cluster_id": 21,
+    "variant_id": 0,
+    "text": "Perform task type 21 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 21 on the input below."
+  },
+  {
+    "id": 21,
+    "category": "question_answering",
+    "cluster_id": 7,
+    "variant_id": 2,
+    "text": "Read the context and respond to the question.",
+    "is_canonical": false,
+    "canonical": "Using the context below, answer the question."
+  },
+  {
+    "id": 124,
+    "category": "synthetic_35",
+    "cluster_id": 35,
+    "variant_id": 0,
+    "text": "Perform task type 35 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 35 on the input below."
+  },
+  {
+    "id": 77,
+    "category": "synthetic_23",
+    "cluster_id": 23,
+    "variant_id": 1,
+    "text": "Execute task 23 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 23 on the input below."
+  },
+  {
+    "id": 9,
+    "category": "classification",
+    "cluster_id": 3,
+    "variant_id": 2,
+    "text": "What is the sentiment of the review below? Choose positive, negative, or neutral.",
+    "is_canonical": false,
+    "canonical": "Determine whether this review is positive, negative, or neutral."
+  },
+  {
+    "id": 82,
+    "category": "synthetic_24",
+    "cluster_id": 24,
+    "variant_id": 2,
+    "text": "Complete task category 24 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 24 on the input below."
+  },
+  {
+    "id": 155,
+    "category": "synthetic_42",
+    "cluster_id": 42,
+    "variant_id": 3,
+    "text": "Apply instruction type 42 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 42 on the input below."
+  },
+  {
+    "id": 89,
+    "category": "synthetic_26",
+    "cluster_id": 26,
+    "variant_id": 1,
+    "text": "Execute task 26 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 26 on the input below."
+  },
+  {
+    "id": 34,
+    "category": "brainstorming",
+    "cluster_id": 12,
+    "variant_id": 0,
+    "text": "Brainstorm ten ideas for the topic below.",
+    "is_canonical": true,
+    "canonical": "Brainstorm ten ideas for the topic below."
+  },
+  {
+    "id": 85,
+    "category": "synthetic_25",
+    "cluster_id": 25,
+    "variant_id": 1,
+    "text": "Execute task 25 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 25 on the input below."
+  },
+  {
+    "id": 160,
+    "category": "synthetic_44",
+    "cluster_id": 44,
+    "variant_id": 0,
+    "text": "Perform task type 44 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 44 on the input below."
+  },
+  {
+    "id": 45,
+    "category": "synthetic_15",
+    "cluster_id": 15,
+    "variant_id": 1,
+    "text": "Execute task 15 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 15 on the input below."
+  },
+  {
+    "id": 47,
+    "category": "synthetic_15",
+    "cluster_id": 15,
+    "variant_id": 3,
+    "text": "Apply instruction type 15 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 15 on the input below."
+  },
+  {
+    "id": 130,
+    "category": "synthetic_36",
+    "cluster_id": 36,
+    "variant_id": 2,
+    "text": "Complete task category 36 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 36 on the input below."
+  },
+  {
+    "id": 46,
+    "category": "synthetic_15",
+    "cluster_id": 15,
+    "variant_id": 2,
+    "text": "Complete task category 15 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 15 on the input below."
+  },
+  {
+    "id": 106,
+    "category": "synthetic_30",
+    "cluster_id": 30,
+    "variant_id": 2,
+    "text": "Complete task category 30 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 30 on the input below."
+  },
+  {
+    "id": 81,
+    "category": "synthetic_24",
+    "cluster_id": 24,
+    "variant_id": 1,
+    "text": "Execute task 24 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 24 on the input below."
+  },
+  {
+    "id": 132,
+    "category": "synthetic_37",
+    "cluster_id": 37,
+    "variant_id": 0,
+    "text": "Perform task type 37 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 37 on the input below."
+  },
+  {
+    "id": 181,
+    "category": "synthetic_49",
+    "cluster_id": 49,
+    "variant_id": 1,
+    "text": "Execute task 49 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 49 on the input below."
+  },
+  {
+    "id": 148,
+    "category": "synthetic_41",
+    "cluster_id": 41,
+    "variant_id": 0,
+    "text": "Perform task type 41 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 41 on the input below."
+  },
+  {
+    "id": 25,
+    "category": "extraction",
+    "cluster_id": 9,
+    "variant_id": 0,
+    "text": "Extract all named entities from the following text.",
+    "is_canonical": false,
+    "canonical": "List the named entities found in this text."
+  },
+  {
+    "id": 170,
+    "category": "synthetic_46",
+    "cluster_id": 46,
+    "variant_id": 2,
+    "text": "Complete task category 46 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 46 on the input below."
+  },
+  {
+    "id": 138,
+    "category": "synthetic_38",
+    "cluster_id": 38,
+    "variant_id": 2,
+    "text": "Complete task category 38 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 38 on the input below."
+  },
+  {
+    "id": 74,
+    "category": "synthetic_22",
+    "cluster_id": 22,
+    "variant_id": 2,
+    "text": "Complete task category 22 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 22 on the input below."
+  },
+  {
+    "id": 58,
+    "category": "synthetic_18",
+    "cluster_id": 18,
+    "variant_id": 2,
+    "text": "Complete task category 18 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 18 on the input below."
+  },
+  {
+    "id": 166,
+    "category": "synthetic_45",
+    "cluster_id": 45,
+    "variant_id": 2,
+    "text": "Complete task category 45 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 45 on the input below."
+  },
+  {
+    "id": 17,
+    "category": "translation",
+    "cluster_id": 6,
+    "variant_id": 1,
+    "text": "Render the sentence below in Spanish.",
+    "is_canonical": true,
+    "canonical": "Render the sentence below in Spanish."
+  },
+  {
+    "id": 49,
+    "category": "synthetic_16",
+    "cluster_id": 16,
+    "variant_id": 1,
+    "text": "Execute task 16 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 16 on the input below."
+  },
+  {
+    "id": 92,
+    "category": "synthetic_27",
+    "cluster_id": 27,
+    "variant_id": 0,
+    "text": "Perform task type 27 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 27 on the input below."
+  },
+  {
+    "id": 75,
+    "category": "synthetic_22",
+    "cluster_id": 22,
+    "variant_id": 3,
+    "text": "Apply instruction type 22 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 22 on the input below."
+  },
+  {
+    "id": 20,
+    "category": "question_answering",
+    "cluster_id": 7,
+    "variant_id": 1,
+    "text": "Using the context below, answer the question.",
+    "is_canonical": true,
+    "canonical": "Using the context below, answer the question."
+  },
+  {
+    "id": 96,
+    "category": "synthetic_28",
+    "cluster_id": 28,
+    "variant_id": 0,
+    "text": "Perform task type 28 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 28 on the input below."
+  },
+  {
+    "id": 31,
+    "category": "reasoning",
+    "cluster_id": 11,
+    "variant_id": 0,
+    "text": "Solve the following math word problem step by step.",
+    "is_canonical": false,
+    "canonical": "Work through this math problem showing each step."
+  },
+  {
+    "id": 137,
+    "category": "synthetic_38",
+    "cluster_id": 38,
+    "variant_id": 1,
+    "text": "Execute task 38 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 38 on the input below."
+  },
+  {
+    "id": 117,
+    "category": "synthetic_33",
+    "cluster_id": 33,
+    "variant_id": 1,
+    "text": "Execute task 33 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 33 on the input below."
+  },
+  {
+    "id": 11,
+    "category": "classification",
+    "cluster_id": 4,
+    "variant_id": 1,
+    "text": "Classify the email below as spam or ham.",
+    "is_canonical": false,
+    "canonical": "Is this email spam or not spam?"
+  },
+  {
+    "id": 67,
+    "category": "synthetic_20",
+    "cluster_id": 20,
+    "variant_id": 3,
+    "text": "Apply instruction type 20 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 20 on the input below."
+  },
+  {
+    "id": 88,
+    "category": "synthetic_26",
+    "cluster_id": 26,
+    "variant_id": 0,
+    "text": "Perform task type 26 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 26 on the input below."
+  },
+  {
+    "id": 91,
+    "category": "synthetic_26",
+    "cluster_id": 26,
+    "variant_id": 3,
+    "text": "Apply instruction type 26 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 26 on the input below."
+  },
+  {
+    "id": 24,
+    "category": "code_generation",
+    "cluster_id": 8,
+    "variant_id": 2,
+    "text": "Create a Python function matching this specification.",
+    "is_canonical": false,
+    "canonical": "Generate Python code for the task described below."
+  },
+  {
+    "id": 97,
+    "category": "synthetic_28",
+    "cluster_id": 28,
+    "variant_id": 1,
+    "text": "Execute task 28 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 28 on the input below."
+  },
+  {
+    "id": 172,
+    "category": "synthetic_47",
+    "cluster_id": 47,
+    "variant_id": 0,
+    "text": "Perform task type 47 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 47 on the input below."
+  },
+  {
+    "id": 180,
+    "category": "synthetic_49",
+    "cluster_id": 49,
+    "variant_id": 0,
+    "text": "Perform task type 49 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 49 on the input below."
+  },
+  {
+    "id": 86,
+    "category": "synthetic_25",
+    "cluster_id": 25,
+    "variant_id": 2,
+    "text": "Complete task category 25 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 25 on the input below."
+  },
+  {
+    "id": 171,
+    "category": "synthetic_46",
+    "cluster_id": 46,
+    "variant_id": 3,
+    "text": "Apply instruction type 46 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 46 on the input below."
+  },
+  {
+    "id": 39,
+    "category": "comparison",
+    "cluster_id": 13,
+    "variant_id": 2,
+    "text": "Provide a comparison of the following two excerpts.",
+    "is_canonical": false,
+    "canonical": "Compare and contrast the two passages below."
+  },
+  {
+    "id": 159,
+    "category": "synthetic_43",
+    "cluster_id": 43,
+    "variant_id": 3,
+    "text": "Apply instruction type 43 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 43 on the input below."
+  },
+  {
+    "id": 87,
+    "category": "synthetic_25",
+    "cluster_id": 25,
+    "variant_id": 3,
+    "text": "Apply instruction type 25 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 25 on the input below."
+  },
+  {
+    "id": 175,
+    "category": "synthetic_47",
+    "cluster_id": 47,
+    "variant_id": 3,
+    "text": "Apply instruction type 47 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 47 on the input below."
+  },
+  {
+    "id": 40,
+    "category": "synthetic_14",
+    "cluster_id": 14,
+    "variant_id": 0,
+    "text": "Perform task type 14 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 14 on the input below."
+  },
+  {
+    "id": 1,
+    "category": "summarization",
+    "cluster_id": 1,
+    "variant_id": 1,
+    "text": "Please give a three-sentence summary of the text below.",
+    "is_canonical": false,
+    "canonical": "Summarize the following paragraph in three sentences."
+  },
+  {
+    "id": 71,
+    "category": "synthetic_21",
+    "cluster_id": 21,
+    "variant_id": 3,
+    "text": "Apply instruction type 21 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 21 on the input below."
+  },
+  {
+    "id": 150,
+    "category": "synthetic_41",
+    "cluster_id": 41,
+    "variant_id": 2,
+    "text": "Complete task category 41 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 41 on the input below."
+  },
+  {
+    "id": 114,
+    "category": "synthetic_32",
+    "cluster_id": 32,
+    "variant_id": 2,
+    "text": "Complete task category 32 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 32 on the input below."
+  },
+  {
+    "id": 56,
+    "category": "synthetic_18",
+    "cluster_id": 18,
+    "variant_id": 0,
+    "text": "Perform task type 18 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 18 on the input below."
+  },
+  {
+    "id": 107,
+    "category": "synthetic_30",
+    "cluster_id": 30,
+    "variant_id": 3,
+    "text": "Apply instruction type 30 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 30 on the input below."
+  },
+  {
+    "id": 178,
+    "category": "synthetic_48",
+    "cluster_id": 48,
+    "variant_id": 2,
+    "text": "Complete task category 48 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 48 on the input below."
+  },
+  {
+    "id": 50,
+    "category": "synthetic_16",
+    "cluster_id": 16,
+    "variant_id": 2,
+    "text": "Complete task category 16 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 16 on the input below."
+  },
+  {
+    "id": 143,
+    "category": "synthetic_39",
+    "cluster_id": 39,
+    "variant_id": 3,
+    "text": "Apply instruction type 39 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 39 on the input below."
+  },
+  {
+    "id": 185,
+    "category": "synthetic_50",
+    "cluster_id": 50,
+    "variant_id": 1,
+    "text": "Execute task 50 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 50 on the input below."
+  },
+  {
+    "id": 154,
+    "category": "synthetic_42",
+    "cluster_id": 42,
+    "variant_id": 2,
+    "text": "Complete task category 42 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 42 on the input below."
+  },
+  {
+    "id": 129,
+    "category": "synthetic_36",
+    "cluster_id": 36,
+    "variant_id": 1,
+    "text": "Execute task 36 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 36 on the input below."
+  },
+  {
+    "id": 59,
+    "category": "synthetic_18",
+    "cluster_id": 18,
+    "variant_id": 3,
+    "text": "Apply instruction type 18 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 18 on the input below."
+  },
+  {
+    "id": 55,
+    "category": "synthetic_17",
+    "cluster_id": 17,
+    "variant_id": 3,
+    "text": "Apply instruction type 17 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 17 on the input below."
+  },
+  {
+    "id": 23,
+    "category": "code_generation",
+    "cluster_id": 8,
+    "variant_id": 1,
+    "text": "Generate Python code for the task described below.",
+    "is_canonical": true,
+    "canonical": "Generate Python code for the task described below."
+  },
+  {
+    "id": 7,
+    "category": "classification",
+    "cluster_id": 3,
+    "variant_id": 0,
+    "text": "Classify the sentiment of the following review as positive, negative, or neutral.",
+    "is_canonical": false,
+    "canonical": "Determine whether this review is positive, negative, or neutral."
+  },
+  {
+    "id": 8,
+    "category": "classification",
+    "cluster_id": 3,
+    "variant_id": 1,
+    "text": "Determine whether this review is positive, negative, or neutral.",
+    "is_canonical": true,
+    "canonical": "Determine whether this review is positive, negative, or neutral."
+  },
+  {
+    "id": 108,
+    "category": "synthetic_31",
+    "cluster_id": 31,
+    "variant_id": 0,
+    "text": "Perform task type 31 on the input below.",
+    "is_canonical": true,
+    "canonical": "Perform task type 31 on the input below."
+  },
+  {
+    "id": 151,
+    "category": "synthetic_41",
+    "cluster_id": 41,
+    "variant_id": 3,
+    "text": "Apply instruction type 41 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 41 on the input below."
+  },
+  {
+    "id": 22,
+    "category": "code_generation",
+    "cluster_id": 8,
+    "variant_id": 0,
+    "text": "Write a Python function that implements the following specification.",
+    "is_canonical": false,
+    "canonical": "Generate Python code for the task described below."
+  },
+  {
+    "id": 139,
+    "category": "synthetic_38",
+    "cluster_id": 38,
+    "variant_id": 3,
+    "text": "Apply instruction type 38 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 38 on the input below."
+  },
+  {
+    "id": 173,
+    "category": "synthetic_47",
+    "cluster_id": 47,
+    "variant_id": 1,
+    "text": "Execute task 47 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 47 on the input below."
+  },
+  {
+    "id": 26,
+    "category": "extraction",
+    "cluster_id": 9,
+    "variant_id": 1,
+    "text": "Identify named entities in the passage below.",
+    "is_canonical": false,
+    "canonical": "List the named entities found in this text."
+  },
+  {
+    "id": 35,
+    "category": "brainstorming",
+    "cluster_id": 12,
+    "variant_id": 1,
+    "text": "Generate 10 creative ideas related to this topic.",
+    "is_canonical": false,
+    "canonical": "Brainstorm ten ideas for the topic below."
+  },
+  {
+    "id": 57,
+    "category": "synthetic_18",
+    "cluster_id": 18,
+    "variant_id": 1,
+    "text": "Execute task 18 for the following input.",
+    "is_canonical": false,
+    "canonical": "Perform task type 18 on the input below."
+  },
+  {
+    "id": 62,
+    "category": "synthetic_19",
+    "cluster_id": 19,
+    "variant_id": 2,
+    "text": "Complete task category 19 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 19 on the input below."
+  },
+  {
+    "id": 70,
+    "category": "synthetic_21",
+    "cluster_id": 21,
+    "variant_id": 2,
+    "text": "Complete task category 21 using the text below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 21 on the input below."
+  },
+  {
+    "id": 6,
+    "category": "summarization",
+    "cluster_id": 2,
+    "variant_id": 2,
+    "text": "Give me a concise paragraph-length summary of this article.",
+    "is_canonical": false,
+    "canonical": "Summarize this article in one paragraph."
+  },
+  {
+    "id": 28,
+    "category": "rewriting",
+    "cluster_id": 10,
+    "variant_id": 0,
+    "text": "Rewrite the following sentence to be more formal.",
+    "is_canonical": false,
+    "canonical": "Rephrase this sentence in formal language."
+  },
+  {
+    "id": 163,
+    "category": "synthetic_44",
+    "cluster_id": 44,
+    "variant_id": 3,
+    "text": "Apply instruction type 44 to the content below.",
+    "is_canonical": false,
+    "canonical": "Perform task type 44 on the input below."
+  }
+]
