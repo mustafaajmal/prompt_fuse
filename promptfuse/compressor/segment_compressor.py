@@ -16,6 +16,30 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+_PROTECTED_SEGMENT_PATTERNS = [
+    re.compile(r"\bmust\b", re.IGNORECASE),
+    re.compile(r"\bdo not\b", re.IGNORECASE),
+    re.compile(r"\bdon't\b", re.IGNORECASE),
+    re.compile(r"\bonly\b", re.IGNORECASE),
+    re.compile(r"\bexactly\b", re.IGNORECASE),
+    re.compile(r"\breturn\b", re.IGNORECASE),
+    re.compile(r"\bformat\b", re.IGNORECASE),
+    re.compile(r"\bjson\b", re.IGNORECASE),
+    re.compile(r"\bxml\b", re.IGNORECASE),
+    re.compile(r"\btable\b", re.IGNORECASE),
+]
+_TOKEN_PROTECT_KEYWORDS = {
+    "not",
+    "n't",
+    "no",
+    "never",
+    "must",
+    "should",
+    "return",
+    "format",
+    "json",
+    "xml",
+}
 
 
 @dataclass
@@ -54,7 +78,10 @@ class SegmentCompressor:
     Sentence-segment-level compressor inspired by LLMLingua.
 
     Scores each sentence segment by average token perplexity under a small proxy LM,
-    then drops lowest-importance segments until the target compression ratio is met.
+    then drops lower-priority segments to approach the target compression ratio.
+
+    Design goal: preserve grammatical and logical integrity by keeping full
+    sentence segments and protecting constraint-bearing instructions.
     """
 
     def __init__(self, config: CompressorConfig | None = None, *, lazy_load: bool = False):
@@ -145,7 +172,11 @@ class SegmentCompressor:
         return scores
 
     def _compress_token_level(self, prompt: str, target_tokens: int) -> str:
-        """Drop low-importance tokens when sentence segmentation cannot reach target ratio."""
+        """Gentle token-level trim when segment compression cannot reduce enough.
+
+        This is intentionally conservative and protects constraint keywords to
+        avoid invalidating prompt logic.
+        """
         self._load_model()
         assert self._tokenizer is not None
 
@@ -157,14 +188,51 @@ class SegmentCompressor:
         if len(ids) <= target_tokens:
             return prompt
 
-        ranked = sorted(token_scores, key=lambda x: x[1])
-        drop_positions = {pos for pos, _ in ranked[: max(0, len(ids) - target_tokens)]}
+        token_strs = self._tokenizer.convert_ids_to_tokens(ids)
+        protected_positions = set()
+        for i, token in enumerate(token_strs):
+            norm = token.lower().replace("Ġ", "").replace("▁", "")
+            if any(key in norm for key in _TOKEN_PROTECT_KEYWORDS):
+                protected_positions.add(i)
+        # Protect a small head/tail window for structural coherence.
+        protected_positions.update(range(min(4, len(ids))))
+        protected_positions.update(range(max(0, len(ids) - 2), len(ids)))
+
+        score_by_position = {pos: score for pos, score in token_scores}
+        ranked_candidates = sorted(
+            (
+                (i, score_by_position.get(i, float("inf")))
+                for i in range(len(ids))
+                if i not in protected_positions
+            ),
+            key=lambda x: x[1],
+        )
+        needed = max(0, len(ids) - target_tokens)
+        drop_positions = {pos for pos, _ in ranked_candidates[:needed]}
 
         kept_ids = [tid for i, tid in enumerate(ids) if i not in drop_positions]
+        if len(kept_ids) > target_tokens:
+            # Last-resort trim from non-protected tail positions.
+            overflow = len(kept_ids) - target_tokens
+            tail_drop = []
+            for i in range(len(ids) - 1, -1, -1):
+                if i in drop_positions or i in protected_positions:
+                    continue
+                tail_drop.append(i)
+                if len(tail_drop) >= overflow:
+                    break
+            if tail_drop:
+                drop_positions.update(tail_drop)
+                kept_ids = [tid for i, tid in enumerate(ids) if i not in drop_positions]
+
         if not kept_ids:
             kept_ids = ids[:target_tokens]
 
         return self._tokenizer.decode(kept_ids, skip_special_tokens=True)
+
+    @staticmethod
+    def _is_protected_segment(segment: str) -> bool:
+        return any(pattern.search(segment) for pattern in _PROTECTED_SEGMENT_PATTERNS)
 
     def compress(self, prompt: str, compression_ratio: float | None = None) -> CompressionResult:
         """
@@ -204,43 +272,53 @@ class SegmentCompressor:
                 segments_total=len(segments),
             )
 
-        scored: list[tuple[str, float, int]] = []
-        for seg in segments:
+        scored: list[tuple[int, str, float, int]] = []
+        for idx, seg in enumerate(segments):
             tok_count = self.count_tokens(seg)
             ppl = self._segment_perplexity(seg)
-            scored.append((seg, ppl, tok_count))
+            scored.append((idx, seg, ppl, tok_count))
 
-        # Keep highest-perplexity segments first (informative content).
-        # Always retain the first segment as the instruction anchor.
-        anchor = segments[0]
-        scored.sort(key=lambda x: x[1], reverse=True)
+        # Keep highest-perplexity segments first (informative content) while
+        # preserving instruction constraints and anchor structure.
+        anchor_idx = 0
+        kept_indices: set[int] = {anchor_idx}
+        kept_tokens = next(tok for i, _s, _p, tok in scored if i == anchor_idx)
 
-        kept: list[str] = []
-        kept_tokens = 0
-        anchor_tokens = next(t for s, _, t in scored if s == anchor)
-        kept.append(anchor)
-        kept_tokens += anchor_tokens
+        protected_indices = {
+            i for i, s, _p, _tok in scored if i != anchor_idx and self._is_protected_segment(s)
+        }
+        for i in sorted(protected_indices):
+            tok_count = next(tok for idx, _s, _p, tok in scored if idx == i)
+            if i not in kept_indices:
+                kept_indices.add(i)
+                kept_tokens += tok_count
 
-        for seg, _, tok_count in scored:
-            if seg == anchor:
+        ranked = sorted(
+            (item for item in scored if item[0] not in kept_indices),
+            key=lambda x: x[2],  # perplexity
+            reverse=True,
+        )
+        for idx, _seg, _ppl, tok_count in ranked:
+            # Keep at least two segments when available to preserve flow.
+            if len(kept_indices) < 2:
+                kept_indices.add(idx)
+                kept_tokens += tok_count
                 continue
-            if kept_tokens + tok_count <= target_tokens or len(kept) <= 1:
-                kept.append(seg)
+            if kept_tokens + tok_count <= target_tokens:
+                kept_indices.add(idx)
                 kept_tokens += tok_count
             if kept_tokens >= target_tokens:
                 break
 
-        kept_texts = set(kept)
-        ordered = [seg for seg in segments if seg in kept_texts]
+        ordered = [seg for idx, seg in enumerate(segments) if idx in kept_indices]
 
         compressed = " ".join(ordered)
         compressed_tokens = self.count_tokens(compressed)
 
-        if compressed_tokens > target_tokens and len(segments) <= 2:
+        # Only use token fallback when sentence granularity cannot reduce enough
+        # and we are still meaningfully over budget.
+        if compressed_tokens > int(target_tokens * 1.35) and len(segments) <= 2:
             compressed = self._compress_token_level(prompt, target_tokens)
-            compressed_tokens = self.count_tokens(compressed)
-        elif compressed_tokens > target_tokens:
-            compressed = self._compress_token_level(compressed, target_tokens)
             compressed_tokens = self.count_tokens(compressed)
 
         return CompressionResult(
