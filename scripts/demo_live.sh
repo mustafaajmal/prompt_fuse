@@ -5,6 +5,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+if [ -f .venv/bin/activate ]; then
+  # shellcheck disable=SC1091
+  source .venv/bin/activate
+fi
+
+if command -v python >/dev/null 2>&1; then
+  PYTHON=python
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON=python3
+else
+  echo "ERROR: python3 not found. Run: source .venv/bin/activate"
+  exit 1
+fi
+
+export PROMPTFUSE_CONFIG="${PROMPTFUSE_CONFIG:-configs/demo.yaml}"
 VLLM_URL="${VLLM_URL:-http://localhost:8000}"
 PF_URL="${PF_URL:-http://localhost:8080}"
 
@@ -17,7 +32,7 @@ if curl -sf "$VLLM_URL/health" >/dev/null 2>&1; then
   echo "  ✓ vLLM running at $VLLM_URL"
 else
   echo "  ✗ vLLM not reachable at $VLLM_URL"
-  echo "    Start with: python -m vllm.entrypoints.openai.api_server --model meta-llama/Llama-3.1-8B-Instruct --enable-prefix-caching --port 8000"
+  echo "    Start with: ./scripts/start_vllm.sh"
   exit 1
 fi
 
@@ -25,17 +40,22 @@ if curl -sf "$PF_URL/health" >/dev/null 2>&1; then
   echo "  ✓ PromptFuse running at $PF_URL"
 else
   echo "  ✗ PromptFuse not reachable at $PF_URL"
-  echo "    Start with: promptfuse-serve  (or: python -m promptfuse.middleware.server)"
+  echo "    Start with: ./scripts/start_promptfuse.sh"
   exit 1
 fi
 
 echo ""
-echo "[2/5] Warm demo inventory..."
-python scripts/warm_demo_inventory.py --config configs/demo.yaml
+echo "[2/5] Demo inventory..."
+if [ "${PROMPTFUSE_WARM:-0}" = "1" ]; then
+  echo "  Rebuilding inventory on disk (PROMPTFUSE_WARM=1)..."
+  "$PYTHON" scripts/warm_demo_inventory.py --config configs/demo.yaml
+else
+  echo "  Using inventory already loaded by PromptFuse (set PROMPTFUSE_WARM=1 to rebuild)"
+fi
 
 echo ""
 echo "[3/5] Paraphrase A (first request — expect cache miss)..."
-python - "$PF_URL" <<'PY'
+"$PYTHON" - "$PF_URL" <<'PY'
 import json, sys, urllib.request
 url = sys.argv[1]
 prompt = (
@@ -45,14 +65,14 @@ prompt = (
 )
 body = json.dumps({"messages":[{"role":"user","content":prompt}],"max_tokens":64,"temperature":0}).encode()
 req = urllib.request.Request(f"{url}/v1/chat/completions", data=body, headers={"Content-Type":"application/json"})
-with urllib.request.urlopen(req) as r:
+with urllib.request.urlopen(req, timeout=300) as r:
     d = json.load(r)
 print("  Output:", d["choices"][0]["message"]["content"][:120] + "...")
 PY
 
 echo ""
 echo "[4/5] Paraphrase B (same meaning — expect unifier hit)..."
-python - "$PF_URL" <<'PY'
+"$PYTHON" - "$PF_URL" <<'PY'
 import json, sys, urllib.request
 url = sys.argv[1]
 prompt = (
@@ -62,15 +82,15 @@ prompt = (
 )
 body = json.dumps({"messages":[{"role":"user","content":prompt}],"max_tokens":64,"temperature":0}).encode()
 req = urllib.request.Request(f"{url}/v1/chat/completions", data=body, headers={"Content-Type":"application/json"})
-with urllib.request.urlopen(req) as r:
+with urllib.request.urlopen(req, timeout=300) as r:
     d = json.load(r)
 print("  Output:", d["choices"][0]["message"]["content"][:120] + "...")
 PY
 
 echo ""
 echo "[5/5] PromptFuse stats..."
-curl -s "$PF_URL/stats" | python -m json.tool
+curl -s "$PF_URL/stats" | "$PYTHON" -m json.tool
 
 echo ""
 echo "=== Demo complete ==="
-echo "Run full experiment: python scripts/run_demo_experiment.py --config configs/demo.yaml"
+echo "Full experiment: $PYTHON scripts/run_demo_experiment.py --config configs/demo.yaml"

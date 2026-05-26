@@ -68,17 +68,32 @@ class PromptFuseServer:
     def _register_lifespan(self) -> None:
         @self.app.on_event("startup")
         async def _warm_models() -> None:
+            import os
+
+            # Unifier only at startup so /health is fast and we don't fight vLLM for VRAM.
             if self.pipeline.unifier:
+                logger.info("Loading bi-encoder for semantic unifier...")
                 self.pipeline.unifier._load_encoder()
-            if self.pipeline.compressor:
+                logger.info(
+                    "Unifier ready (inventory size=%d)",
+                    self.pipeline.unifier.store.size,
+                )
+
+            preload_compressor = os.environ.get("PROMPTFUSE_PRELOAD_COMPRESSOR", "0") == "1"
+            if preload_compressor and self.pipeline.compressor:
                 try:
+                    logger.info("Preloading proxy LM compressor (PROMPTFUSE_PRELOAD_COMPRESSOR=1)...")
                     self.pipeline.compressor._load_model()
+                    logger.info("Compressor preloaded.")
                 except Exception as exc:
                     logger.warning(
-                        "Compressor not preloaded (%s). Set HF_TOKEN and restart, "
-                        "or compression requests will fail until models are cached.",
+                        "Compressor not preloaded (%s). Will retry on first request.",
                         exc,
                     )
+            elif self.pipeline.compressor:
+                logger.info(
+                    "Compressor will load on first request (set PROMPTFUSE_PRELOAD_COMPRESSOR=1 to preload)."
+                )
 
     def _register_routes(self) -> None:
         @self.app.get("/health")
@@ -232,9 +247,15 @@ def create_app(config_path: str | None = None) -> FastAPI:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, force=True)
+    print("PromptFuse: importing (may take 30–60s on /mnt/c)...", flush=True)
     settings = Settings()
     config = settings.load()
+    print(
+        f"PromptFuse: starting on {config.serving.host}:{config.serving.port} "
+        f"→ vLLM {config.serving.vllm_base_url}",
+        flush=True,
+    )
     server = PromptFuseServer(config, config_path=settings.config_path)
     logger.info(
         "PromptFuse listening on %s:%s → vLLM %s (config: %s)",

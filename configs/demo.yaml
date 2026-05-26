@@ -3,7 +3,8 @@
 compressor:
   proxy_model: "meta-llama/Llama-3.2-1B"
   compression_ratio: 0.40
-  device: "auto"
+  # "cpu" while vLLM uses the GPU; use "auto" if you lowered vLLM GPU util and have headroom
+  device: "cpu"
   max_length: 4096
 
 unifier:

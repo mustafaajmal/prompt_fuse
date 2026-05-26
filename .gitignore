@@ -19,6 +19,8 @@ data/*.json
 !data/demo_workload.json
 !data/complex_workload.json
 !data/synthetic_paraphrases.json
+!data/complex_workload.json
+!data/eval_prompts_local.json
 logs/
 results/
 
