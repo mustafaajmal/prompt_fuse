@@ -107,3 +107,10 @@ class PromptFusePipeline:
             unification_ms=unification_ms,
             total_ms=total_ms,
         )
+
+    def noop_result(self, raw_prompt: str) -> PipelineResult:
+        """Return a pass-through result when no compressible content is found."""
+        return PipelineResult(
+            raw_prompt=raw_prompt,
+            final_prompt=raw_prompt,
+        )

@@ -2,8 +2,34 @@
 
 from __future__ import annotations
 
-from promptfuse.compressor.segment_compressor import split_sentences
-from promptfuse.compressor.segment_compressor import SegmentCompressor
+from promptfuse.compressor.segment_compressor import (
+    SegmentCompressor,
+    _SegmentScore,
+    split_sentences,
+)
+
+
+def _mock_score_segments(
+    compressor: SegmentCompressor,
+    perplexities: list[float],
+    *,
+    token_fn=None,
+) -> None:
+    def fake(segments: list[str]) -> tuple[list[_SegmentScore], list[int]]:
+        infos = []
+        for idx, seg in enumerate(segments):
+            tok = token_fn(seg) if token_fn else len(seg.split())
+            infos.append(
+                _SegmentScore(
+                    index=idx,
+                    text=seg,
+                    token_count=tok,
+                    perplexity=perplexities[idx],
+                )
+            )
+        return infos, []
+
+    compressor._score_segments = fake  # type: ignore[method-assign]
 
 
 def test_split_multiline_prompt():
@@ -34,41 +60,47 @@ def test_importance_sorting_direction():
 
 def test_compress_keeps_protected_constraint_segment():
     compressor = SegmentCompressor(lazy_load=True)
-    compressor.count_tokens = lambda text: max(1, len(text.split()))
+    segments = [
+        "You are a careful assistant.",
+        "You must return JSON with keys answer and confidence.",
+        "Add brief rationale.",
+    ]
+    prompt = " ".join(segments)
 
-    score_map = {
-        "You are a careful assistant.": 80.0,
-        "You must return JSON with keys answer and confidence.": 1.0,
-        "Add brief rationale.": 10.0,
-    }
-    compressor._segment_perplexity = lambda seg: score_map.get(seg, 5.0)
-
-    prompt = (
-        "You are a careful assistant. "
-        "You must return JSON with keys answer and confidence. "
-        "Add brief rationale."
+    _mock_score_segments(
+        compressor,
+        [80.0, 1.0, 10.0],
+        token_fn=lambda s: len(s.split()),
     )
+    compressor.count_tokens = lambda text: max(1, len(text.split()))  # type: ignore[method-assign]
+
     result = compressor.compress(prompt, compression_ratio=0.55)
     assert "must return JSON" in result.compressed
 
 
 def test_token_fallback_is_not_used_when_only_slightly_over_target():
     compressor = SegmentCompressor(lazy_load=True)
-    compressor.count_tokens = lambda text: max(1, len(text.split()))
-    compressor._segment_perplexity = lambda seg: 10.0
+    segments = [
+        "You are a helpful assistant.",
+        "Provide a concise explanation with one example.",
+        "Keep the tone professional.",
+    ]
+    prompt = " ".join(segments)
+
+    _mock_score_segments(
+        compressor,
+        [10.0, 10.0, 10.0],
+        token_fn=lambda s: len(s.split()),
+    )
+    compressor.count_tokens = lambda text: max(1, len(text.split()))  # type: ignore[method-assign]
 
     called = {"token_fallback": False}
 
-    def _fallback(prompt: str, target_tokens: int) -> str:
+    def _fallback(prompt_text: str, target_tokens: int) -> str:
         called["token_fallback"] = True
-        return prompt
+        return prompt_text
 
-    compressor._compress_token_level = _fallback
+    compressor._compress_token_level = _fallback  # type: ignore[method-assign]
 
-    prompt = (
-        "You are a helpful assistant. "
-        "Provide a concise explanation with one example. "
-        "Keep the tone professional."
-    )
     compressor.compress(prompt, compression_ratio=0.34)
     assert called["token_fallback"] is False

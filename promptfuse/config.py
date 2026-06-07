@@ -14,7 +14,22 @@ class CompressorConfig(BaseModel):
     proxy_model: str = "meta-llama/Llama-3.2-1B"
     compression_ratio: float = 0.40
     device: str = "auto"
-    max_length: int = 4096
+    max_length: int = 4096  # match proxy LM context (e.g. 1024 for GPT-2)
+    batch_size: int = 8  # perplexity scoring batch size (lower on MPS if OOM)
+    preserve_patterns: list[str] = Field(
+        default_factory=lambda: [
+            r"\bmust\b",
+            r"\bexactly\b",
+            r"\bonly\b",
+            r"\bdo not\b",
+            r"\bdon't\b",
+            r"\breturn\b",
+            r"\bformat\b",
+            r"\bjson\b",
+            r"\bxml\b",
+            r"\bstep by step\b",
+        ]
+    )
 
 
 class UnifierConfig(BaseModel):
@@ -30,6 +45,8 @@ class ServingConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8080
     vllm_base_url: str = "http://localhost:8000"
+    vllm_metrics_url: str | None = None
+    vllm_timeout_s: float = 300.0
     vllm_model: str = "meta-llama/Llama-3.1-8B-Instruct"
     enable_compression: bool = True
     enable_unification: bool = True

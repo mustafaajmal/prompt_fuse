@@ -94,7 +94,25 @@ Results land in `results/` (`unifier_eval.json`, `compression_eval.json`, `demo_
 
 Shows paraphrase A vs B → unified canonical → `/stats` unifier hit rate.
 
-## Linux / WSL2
+## CPU-only workflow (no GPU)
+
+For local validation without vLLM, see **[CPU_README.md](CPU_README.md)** and **[ROADMAP.md](ROADMAP.md)**.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # or .\.venv\Scripts\Activate.ps1 on Windows
+pip install -e ".[dev]"
+
+# One-command CPU artifact pipeline
+python scripts/run_cpu_pipeline.py
+
+# Readiness checks
+python scripts/run_cpu_readiness_checks.py
+```
+
+CPU artifacts land in `results/cpu_final/` (benchmark JSON, τ sweep, summary CSV).
+
+## Linux / WSL2 (demo scripts)
 
 ```bash
 chmod +x scripts/setup.sh scripts/demo_live.sh
@@ -115,14 +133,14 @@ promptfuse/
 data/
 ├── demo_workload.json       # 5 clusters for A/B/C demo
 ├── complex_workload.json    # 8 RAG/agent-style clusters (stress test)
-└── synthetic_paraphrases.json  # 500 paraphrases / 50 categories
+└── synthetic_paraphrases.json  # paraphrase clusters for unifier eval
 
 scripts/
-├── setup.ps1 / setup.sh
-├── run_full_eval.py
-├── run_unifier_eval.py
-├── run_compression_eval.py
-├── warm_demo_inventory.py
+├── setup.ps1 / setup.sh / wsl_setup.sh
+├── start_vllm.ps1 / start_promptfuse.ps1
+├── run_full_eval.py / run_unifier_eval.py / run_compression_eval.py
+├── run_cpu_pipeline.py / aggregate_results.py / tau_sweep.py
+├── warm_demo_inventory.py / demo_live.ps1
 └── train_bi_encoder.py
 ```
 
@@ -131,8 +149,11 @@ scripts/
 `configs/demo.yaml` (recommended for presentation):
 
 - `compressor.compression_ratio: 0.40`
+- `compressor.preserve_patterns` — regex guardrails for instruction segments
 - `unifier.similarity_threshold: 0.78`
 - `unifier.inventory_path: data/demo_canonical_inventory`
+- `serving.vllm_base_url` — vLLM backend URL
+- `serving.vllm_metrics_url` — optional metrics proxy via `/v1/metrics/vllm-cache`
 
 Override via environment: `PROMPTFUSE_CONFIG=configs/demo.yaml`
 
@@ -145,12 +166,14 @@ Override via environment: `PROMPTFUSE_CONFIG=configs/demo.yaml`
 | `promptfuse-demo --no-vllm` | Prefix diversity: full < raw |
 | `promptfuse-demo` | End-to-end with vLLM prefix cache |
 | `run_quality_eval.py` | ROUGE-L ≥ 0.85 on model outputs |
+| `run_cpu_pipeline.py` | CPU artifacts + τ sweep (no GPU) |
 
 ## API
 
 - `POST /v1/chat/completions` — OpenAI-compatible (forwards to vLLM after fuse)
 - `POST /v1/process` — compress + unify only (debug)
 - `GET /stats` — unifier hit rate, inventory size
+- `GET /v1/metrics/vllm-cache` — proxy vLLM cache metrics (if configured)
 
 ## Models
 
